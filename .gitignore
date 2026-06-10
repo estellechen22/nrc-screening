@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+.venv/
+venv/
+env/
+
+# Environment (contains API keys!)
+.env
+*.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backend - runtime data
+主播背调AI/backend/data/*.db
+主播背调AI/backend/data/exports/
+主播背调AI/backend/data/subtitles/
+主播背调AI/backend/downloads/
+
+# Logs
+*.log
+
+# Workbuddy (local AI tool data)
+.workbuddy/
+
+# Root-level research/analysis assets (not actual source code)
+/国内NRC.png
+/NRCicon.png
+/*.xlsx
+/*.pdf
+/*.docx
+/*.pptx
+/*.m4v
+/*.tmp
+/*.webp

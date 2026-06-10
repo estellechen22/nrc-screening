@@ -1,0 +1,5 @@
+{
+  "youtube_api_key": "",
+  "perspective_api_key": "",
+  "notes": "运行时留空，回落到 .env。若通过前端配置页填入，则覆盖 .env。"
+}

@@ -1,0 +1,137 @@
+{
+  "geo_sensitive": {
+    "label": "地缘政治敏感",
+    "description": "涉及领土主权、政治实体承认等红线议题",
+    "severity": "critical",
+    "keywords": [
+      "taiwan independence", "free taiwan", "stand with taiwan", "taiwan is a country",
+      "taiwan not china", "taiwan nation", "taiwanese sovereignty",
+      "hong kong independence", "free hong kong", "hong kong is not china",
+      "stand with hong kong", "hong kong protest",
+      "tibet independence", "free tibet", "tibet is not china",
+      "tiananmen", "june fourth", "tiananmen square",
+      "xinjiang genocide", "uyghur genocide", "free uyghur",
+      "east turkestan", "xinjiang concentration camp",
+      "south china sea arbitration",
+      "chinazi", "ccp nazi"
+    ]
+  },
+  "anti_china_narrative": {
+    "label": "反华叙事",
+    "description": "针对中国/中共/中国公司的系统性抹黑话术",
+    "severity": "critical",
+    "keywords": [
+      "ccp propaganda", "chinese spy", "chinese surveillance",
+      "chinese malware", "chinese hacking", "china threat",
+      "china virus", "wuhan virus", "chinese virus",
+      "made in china spy", "chinese data theft",
+      "china debt trap", "chinese exploitation",
+      "chinese censorship", "great firewall",
+      "chinese bot farm", "chinese disinformation",
+      "ccp control", "communist takeover",
+      "china stealing", "chinese theft"
+    ]
+  },
+  "stigmatization": {
+    "label": "污名化标签",
+    "description": "针对中国游戏/中国公司的行业污名化表述",
+    "severity": "warning",
+    "keywords": [
+      "chinese shovelware", "chinese gacha scam",
+      "chinese cash grab", "chinese pay to win",
+      "chinese knockoff", "chinese bootleg", "chinese fake",
+      "chinese spyware game", "chinese malware app",
+      "chinese data miner", "chinese gambling",
+      "chinese loot box", "chinese predator game",
+      "tencent spy", "tencent malware", "tencent data",
+      "chi-com game", "red money game",
+      "chinese whale hunting",
+      "ccp gaming", "communist game"
+    ]
+  },
+  "hate_or_discrimination": {
+    "label": "仇恨与歧视",
+    "description": "种族歧视、性别歧视、LGBTQ+ 仇恨言论等",
+    "severity": "critical",
+    "keywords": [
+      "chink", "chinese slurs",
+      "nigger", "faggot", "tranny", "retard",
+      "kill yourself", "go die", "rape",
+      "white supremacy", "nazi", "hitler",
+      "deport them", "go back to china",
+      "anti semitic", "jew",
+      "islamophobic", "muslim terrorist",
+      "transphobic", "homophobic",
+      "misogyny", "women belong",
+      "groomer", "pedophile accusation"
+    ]
+  },
+  "religious_sensitivity": {
+    "label": "宗教敏感",
+    "description": "宗教迫害叙事、邪教关联、宗教极端主义等",
+    "severity": "critical",
+    "keywords": [
+      "falun gong", "falun dafa", "法轮功", "法轮大法",
+      "shen yun", "shenyun performing",
+      "eastern lightning", "全能神",
+      "religious persecution china", "china religious crackdown",
+      "christian persecution china", "china church crackdown",
+      "underground church china", "house church china",
+      "three self church", "三自教会",
+      "muslim oppression china", "china mosque demolition",
+      "tibetan buddhist persecution",
+      "religious freedom china", "china religious surveillance",
+      "bible ban china", "cross removal china",
+      "china cult crackdown", "religious extremism",
+      "islamic extremism", "religious radicalization",
+      "china atheist persecution", "china religious control"
+    ]
+  },
+  "war_conflict": {
+    "label": "战争与冲突",
+    "description": "历史战争叙事、军事威胁言论、战争煽动性话术",
+    "severity": "warning",
+    "keywords": [
+      "nanjing massacre", "nanking massacre", "南京大屠杀",
+      "sino japanese war", "second sino japanese war",
+      "comfort women", "慰安妇",
+      "china war crime", "china aggression",
+      "china invasion", "china expansionism",
+      "china military threat", "pla threat",
+      "china territorial expansion", "china imperialism",
+      "china colonization", "china neo colonialism",
+      "south china sea militarization", "south china sea conflict",
+      "taiwan strait war", "china invade taiwan",
+      "sino indian border war", "china border aggression",
+      "cold war china", "china new cold war",
+      "china nuclear threat", "china missile threat",
+      "china cyber attack", "china cyber warfare",
+      "china biological weapon", "china lab leak",
+      "chinese army brutality", "pla brutality",
+      "china genocide", "china ethnic cleansing"
+    ]
+  },
+  "gender_issues": {
+    "label": "性别议题",
+    "description": "性别歧视、厌女文化、游戏行业性别争议等",
+    "severity": "warning",
+    "keywords": [
+      "china gender discrimination", "china sexism",
+      "china gender gap", "china gender inequality",
+      "chinese women rights", "china women oppression",
+      "china patriarchy", "china toxic masculinity",
+      "china me too", "china metoo movement",
+      "gender pay gap china", "china workplace sexism",
+      "china abortion", "china one child gender",
+      "china female infanticide", "china missing women",
+      "china gender ratio", "china bride trafficking",
+      "women in gaming harassment", "gamer girl harassment",
+      "gaming sexism", "game industry misogyny",
+      "female objectification gaming",
+      "gacha sexualization", "loot box sexualization",
+      "anime sexualization minors",
+      "chinese game sexist", "chinese game objectification",
+      "games industry gender discrimination"
+    ]
+  }
+}
