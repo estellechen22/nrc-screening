@@ -57,7 +57,7 @@ async def start_screening(req: ScreenRequest, background_tasks: BackgroundTasks)
                               req.date_from, req.date_to)
 
     # 初始化进度 — 前端立即可见
-    update_progress(screen_id, screen_id=screen_id, status="pending", current_step=0,
+    update_progress(screen_id, status="pending", current_step=0,
                     step_name="等待调度", detail="任务已提交，等待执行引擎启动...", log=[])
 
     return {
