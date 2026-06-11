@@ -110,9 +110,9 @@ async def run_layer2(url: str, platform: str, log: list,
     # 获取视频ID列表（限制最多100条，避免超时）
     date_filter = f"--dateafter {date_after} --datebefore {date_before}"
     cmd = (
-        f'{YT_DLP} --cookies-from-browser chrome --flat-playlist --playlist-end 100 {date_filter} '
+        f'{YT_DLP} --flat-playlist --playlist-end 100 {date_filter} '
         f'--print "%(id)s|||%(title)s|||%(upload_date)s" '
-        f'"{url}/videos" 2>/dev/null'
+        f'"{url}/videos" 2>&1'
     )
 
     result = run_cmd(cmd, timeout=120)
@@ -141,9 +141,9 @@ async def run_layer2(url: str, platform: str, log: list,
             continue
 
         cmd = (
-            f'{YT_DLP} --cookies-from-browser chrome --skip-download --write-auto-sub --sub-lang en '
+            f'{YT_DLP} --skip-download --write-auto-sub --sub-lang en '
             f'-o "{vid}.%(ext)s" '
-            f'"https://www.youtube.com/watch?v={vid}" 2>/dev/null'
+            f'"https://www.youtube.com/watch?v={vid}" 2>&1'
         )
         r = run_cmd(cmd, timeout=30, cwd=SUBTITLE_DIR)
         if r["success"]:
@@ -151,9 +151,9 @@ async def run_layer2(url: str, platform: str, log: list,
         else:
             # 尝试手动字幕
             cmd2 = (
-                f'{YT_DLP} --cookies-from-browser chrome --skip-download --write-sub --sub-lang en '
+                f'{YT_DLP} --skip-download --write-sub --sub-lang en '
                 f'-o "{vid}.%(ext)s" '
-                f'"https://www.youtube.com/watch?v={vid}" 2>/dev/null'
+                f'"https://www.youtube.com/watch?v={vid}" 2>&1'
             )
             r2 = run_cmd(cmd2, timeout=30, cwd=SUBTITLE_DIR)
             if r2["success"]:
