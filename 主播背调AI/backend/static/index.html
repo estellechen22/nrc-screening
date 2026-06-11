@@ -2750,9 +2750,21 @@ function showBatchDetail(idx) {
 const ScreenController = {
   /** 正在执行的 taskId 列表 */
   activeTasks: [],
+  /** 当前 SSE 连接（用于新任务开始时清理旧连接） */
+  _currentEventSource: null,
+
+  /** 清理旧筛查任务 */
+  _abortCurrent() {
+    if (this._currentEventSource) {
+      try { this._currentEventSource.close(); } catch (_) {}
+      this._currentEventSource = null;
+    }
+    ProgressUI.hide();
+  },
 
   /** 执行单条筛查 */
   async runSingle(url) {
+    this._abortCurrent();
     hideResultView();
     ProgressUI.resetSteps();
     ProgressUI.show();
@@ -2787,8 +2799,12 @@ const ScreenController = {
     let sseDone = false;
 
     const evtSource = new EventSource(`${API_BASE}/screen/${screenId}/progress`);
+    this._currentEventSource = evtSource;
 
-    const cleanupSSE = () => { try { evtSource.close(); } catch (_) {} };
+    const cleanupSSE = () => {
+      if (this._currentEventSource === evtSource) this._currentEventSource = null;
+      try { evtSource.close(); } catch (_) {}
+    };
 
     evtSource.onmessage = (event) => {
       try {
@@ -2911,6 +2927,8 @@ const ScreenController = {
 
   /** 执行批量筛查（最多5条并行） */
   async runBatch(urls) {
+    this._abortCurrent();
+    hideResultView();
     ProgressUI.resetSteps();
     ProgressUI.show();
     ProgressUI.setTitle(`批量筛查 · 共 ${urls.length} 人`);
