@@ -140,26 +140,46 @@ async def run_layer2(url: str, platform: str, log: list,
             downloaded += 1
             continue
 
-        cmd = (
-            f'{YT_DLP} --skip-download --write-auto-sub --sub-lang en '
-            f'-o "{vid}.%(ext)s" '
-            f'"https://www.youtube.com/watch?v={vid}" 2>&1'
-        )
-        r = run_cmd(cmd, timeout=30, cwd=SUBTITLE_DIR)
-        if r["success"]:
+        # 尝试多种方式获取字幕
+        subtitle_found = False
+        for attempt in range(3):
+            if attempt == 0:
+                # 方式1: 自动英文字幕
+                cmd = (
+                    f'{YT_DLP} --skip-download --write-auto-sub --sub-lang en --sub-format "vtt/srt" '
+                    f'--no-check-certificate --extractor-retries 3 --ignore-errors '
+                    f'-o "{vid}.%(ext)s" '
+                    f'"https://www.youtube.com/watch?v={vid}" 2>&1'
+                )
+            elif attempt == 1:
+                # 方式2: 手动英文字幕
+                cmd = (
+                    f'{YT_DLP} --skip-download --write-sub --sub-lang en --sub-format "vtt/srt" '
+                    f'--no-check-certificate --extractor-retries 3 --ignore-errors '
+                    f'-o "{vid}.%(ext)s" '
+                    f'"https://www.youtube.com/watch?v={vid}" 2>&1'
+                )
+            else:
+                # 方式3: 允许所有语言字幕
+                cmd = (
+                    f'{YT_DLP} --skip-download --write-auto-sub --sub-langs all --sub-format "vtt/srt" '
+                    f'--no-check-certificate --extractor-retries 3 --ignore-errors '
+                    f'-o "{vid}.%(ext)s" '
+                    f'"https://www.youtube.com/watch?v={vid}" 2>&1'
+                )
+
+            r = run_cmd(cmd, timeout=60, cwd=SUBTITLE_DIR)
+
+            # 检查是否真的下载了字幕文件
+            new_files = glob.glob(os.path.join(SUBTITLE_DIR, f"{vid}*.srt")) + glob.glob(os.path.join(SUBTITLE_DIR, f"{vid}*.vtt"))
+            if new_files:
+                subtitle_found = True
+                break
+
+        if subtitle_found:
             downloaded += 1
         else:
-            # 尝试手动字幕
-            cmd2 = (
-                f'{YT_DLP} --skip-download --write-sub --sub-lang en '
-                f'-o "{vid}.%(ext)s" '
-                f'"https://www.youtube.com/watch?v={vid}" 2>&1'
-            )
-            r2 = run_cmd(cmd2, timeout=30, cwd=SUBTITLE_DIR)
-            if r2["success"]:
-                downloaded += 1
-            else:
-                no_caption_ids.append(vid)
+            no_caption_ids.append(vid)
 
     log.append(f"[L2] 成功下载 {downloaded}/{len(video_ids)} 条字幕")
 
