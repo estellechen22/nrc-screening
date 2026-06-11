@@ -1,552 +1,3658 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>主播风险筛查系统 · 洛克王国世界</title>
-  <style>
-    :root {
-      --bg-deep:#070a14; --bg:#0c1124; --bg-card:#111832; --bg-card-hover:#151d3d;
-      --text:#e4e9ff; --muted:#8891b5; --line:#1e2a4f; --line-light:#263461;
-      --gold:#f5b800; --gold-soft:rgba(245,184,0,.18); --gold-glow:rgba(245,184,0,.35);
-      --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --info:#60a5fa;
-      --ok-bg:rgba(34,197,94,.1); --warn-bg:rgba(245,158,11,.1); --bad-bg:rgba(239,68,68,.1); --info-bg:rgba(96,165,250,.1);
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft Yahei",sans-serif;color:var(--text);background:var(--bg-deep)}
-    .wrap{max-width:1260px;margin:0 auto;padding:20px 20px 40px}
-    .title{font-size:28px;font-weight:800;margin:0 0 4px;letter-spacing:-.3px}
-    .title span{background:linear-gradient(135deg,var(--gold),#e8a400);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .sub{color:var(--muted);font-size:14px;margin-bottom:22px;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
-    .tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--bg-card);border-radius:14px;padding:4px;width:fit-content}
-    .tab{border:none;background:transparent;color:var(--muted);padding:10px 20px;border-radius:11px;cursor:pointer;font-size:14px;font-weight:500;transition:all .2s}
-    .tab:hover{color:var(--text)}
-    .tab.active{background:var(--bg);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.3)}
-    .panel{background:var(--bg-card);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:16px}
-    .row{display:grid;grid-template-columns:1fr auto;gap:10px}.row3{display:grid;grid-template-columns:1fr 180px auto;gap:10px}
-    input,select,button,textarea{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:14px;outline:none;transition:border-color .2s}
-    input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
-    textarea{width:100%;min-height:160px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-    button{background:linear-gradient(135deg,var(--gold) 0%,#d49800 100%);color:#0a0f1f;border:none;border-radius:10px;padding:10px 18px;cursor:pointer;font-weight:700;font-size:14px;transition:all .2s}
-    button:hover{box-shadow:0 4px 16px var(--gold-glow)}
-    button.secondary{background:var(--bg);color:var(--text);border:1px solid var(--line)}
-    button.secondary:hover{background:var(--bg-card-hover);border-color:var(--line-light);box-shadow:none}
-    button.ghost{background:transparent;color:var(--muted);border:none;padding:6px 10px;font-weight:500}
-    .hint{color:var(--muted);font-size:13px;margin-top:8px}.status{margin-top:12px;padding:10px 14px;border-radius:10px;font-size:13px}
-    .status.info{background:var(--info-bg);border:1px solid rgba(96,165,250,.25)}.status.ok{background:var(--ok-bg);border:1px solid rgba(34,197,94,.25)}
-    .status.warn{background:var(--warn-bg);border:1px solid rgba(245,158,11,.25)}.status.bad{background:var(--bad-bg);border:1px solid rgba(239,68,68,.25)}
-    .grid{display:grid;gap:14px}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
-    .metric{padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
-    .metric .k{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.5px}.metric .v{font-size:22px;font-weight:700;margin-top:5px}
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NRCG · 创作者 AI 背调系统</title>
+<style>
+/* =========================================================
+   Step 1 — CSS 体系
+   ========================================================= */
+:root {
+  /* 品牌色 */
+  --gold: #FFC000;
+  --gold-soft: rgba(255,192,0,.15);
+  --gold-glow: rgba(255,192,0,.35);
+  --gold-gradient: linear-gradient(135deg, #FFC000 0%, #e0a800 100%);
 
-    /* API status banner */
-    .api-banner{padding:12px 16px;border-radius:12px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-    .api-banner.all-ok{background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.2);color:var(--ok)}
-    .api-banner.warning{background:var(--warn-bg);border:1px solid rgba(245,158,11,.25);color:var(--warn)}
-    .api-banner .api-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  /* 背景 */
+  --bg-deep: #000000;
+  --bg-section: #05050a;
+  --bg: #0a0a14;
+  --bg-card: #0e0e1e;
+  --bg-card-hover: #12122a;
+  --bg-input: #080810;
 
-    /* Search → Results transition */
-    .search-card{transition:all .3s}
-    .search-card.compact{padding:12px 20px;margin-bottom:8px}
-    .search-card.compact .row{grid-template-columns:1fr auto auto;gap:8px}
-    .back-link{display:inline-flex;align-items:center;gap:4px;color:var(--muted);cursor:pointer;font-size:13px;margin-bottom:12px;border:none;background:none;padding:0}
-    .back-link:hover{color:var(--gold)}
+  /* 文字 */
+  --text: #e4e9ff;
+  --text-muted: #8891b5;
 
-    /* Animated status card */
-    @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-    .screening-card{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:16px;background:var(--bg-card);padding:0}
-    .screening-card .shimmer-bar{height:2px;background:linear-gradient(90deg,transparent 0%,var(--gold) 50%,transparent 100%);background-size:200% 100%;animation:shimmer 2s ease-in-out infinite}
-    .screening-card .sc-body{padding:24px;text-align:center}
-    .screening-card .sc-title{font-size:18px;font-weight:700;margin-bottom:6px}
-    .screening-card .sc-sub{color:var(--muted);font-size:13px;margin-bottom:16px}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-    .loading-dots{animation:pulse 1.5s ease-in-out infinite}
+  /* 线条 */
+  --line: #1e2a4f;
+  --line-light: #263461;
 
-    /* Step trace */
-    .trace-steps{display:flex;flex-direction:column;gap:6px;max-width:360px;margin:0 auto}
-    .trace-step{display:flex;align-items:center;gap:10px;font-size:12px;padding:6px 0}
-    .trace-step .ts-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;border:1px solid var(--line);background:var(--bg)}
-    .trace-step.done .ts-dot{border-color:var(--ok);color:var(--ok)}.trace-step.done .ts-label{color:var(--muted)}
-    .trace-step.active .ts-dot{border-color:var(--gold);color:var(--gold);animation:pulse 1.2s ease-in-out infinite}.trace-step.active .ts-label{color:var(--gold);font-weight:600}
-    .trace-step.pending .ts-dot{opacity:.4}.trace-step.pending .ts-label{opacity:.4}
+  /* 语义色 */
+  --ok: #22c55e;
+  --ok-bg: rgba(34,197,94,.1);
+  --warn: #f59e0b;
+  --warn-bg: rgba(245,158,11,.1);
+  --bad: #ef4444;
+  --bad-bg: rgba(239,68,68,.1);
+  --info: #60a5fa;
+  --info-bg: rgba(96,165,250,.1);
 
-    /* Gauge and verdict */
-    .gauge-wrap{display:flex;align-items:center;gap:20px;margin-bottom:16px}
-    .gauge-ring{position:relative;width:120px;height:120px;flex-shrink:0}
-    .gauge-ring svg{transform:rotate(-90deg)}.gauge-ring .score-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;font-size:32px;line-height:1.2}
-    .gauge-ring .score-label{font-size:11px;font-weight:500;color:var(--muted)}
-    .verdict-banner{flex:1;padding:16px 20px;border-radius:12px;font-weight:700;font-size:15px}
-    .verdict-banner.approve{border:1px solid rgba(34,197,94,.3);background:var(--ok-bg);color:var(--ok)}
-    .verdict-banner.review{border:1px solid rgba(245,158,11,.3);background:var(--warn-bg);color:var(--warn)}
-    .verdict-banner.reject{border:1px solid rgba(239,68,68,.3);background:var(--bad-bg);color:var(--bad)}
+  /* 层级风险色 */
+  --risk-low: var(--ok);
+  --risk-low-bg: var(--ok-bg);
+  --risk-medium: var(--warn);
+  --risk-medium-bg: var(--warn-bg);
+  --risk-high: var(--bad);
+  --risk-high-bg: var(--bad-bg);
 
-    /* Layer cards */
-    .layer{margin-top:8px;border:1px solid var(--line);border-radius:12px;overflow:hidden;border-left:4px solid var(--line);transition:border-color .2s;scroll-margin-top:100px}
-    .layer.low-risk{border-left-color:var(--ok)}.layer.medium-risk{border-left-color:var(--warn)}.layer.high-risk{border-left-color:var(--bad)}
-    .layer-hd{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--bg);cursor:pointer;font-weight:600;font-size:14px;gap:12px}
-    .layer-hd:hover{background:#0f1630}
-    .layer-hd .layer-icon{font-size:18px;margin-right:4px}
-    .badge{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid;white-space:nowrap}
-    .badge.low-risk{color:var(--ok);border-color:rgba(34,197,94,.35)}.badge.medium-risk{color:var(--warn);border-color:rgba(245,158,11,.35)}.badge.high-risk{color:var(--bad);border-color:rgba(239,68,68,.35)}
-    .layer-bd{display:none;padding:16px;background:#0d1327;font-size:13px}.layer.open .layer-bd{display:block}
-    .layer-chevron{transition:transform .25s;color:var(--muted);font-size:12px}.layer.open .layer-chevron{transform:rotate(180deg)}
+  /* 间距 */
+  --radius: 10px;
+  --radius-lg: 16px;
 
-    /* Chip tags */
-    .chip-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chip{padding:4px 10px;border-radius:8px;font-size:12px;border:1px solid;font-weight:500}
-    .chip.info{border-color:rgba(96,165,250,.35);color:#93bbfd;background:rgba(96,165,250,.08)}
-    .chip.warning{border-color:rgba(245,158,11,.35);color:#fbbf24;background:rgba(245,158,11,.08)}
-    .chip.critical{border-color:rgba(239,68,68,.35);color:#f87171;background:rgba(239,68,68,.08)}
+  /* 字体 */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "PingFang SC", "Microsoft Yahei", "Helvetica Neue", sans-serif;
+  --mono: "SF Mono", "Cascadia Code", "Fira Code", Menlo, monospace;
+}
 
-    /* Anchor nav */
-    .anchor-nav{position:sticky;top:20px;display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;z-index:5}
-    .anchor-dot{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:500;color:var(--muted);background:var(--bg-card);border:1px solid var(--line);cursor:pointer;transition:all .2s;text-decoration:none}
-    .anchor-dot:hover{color:var(--text);border-color:var(--line-light)}
-    .anchor-dot:target,.anchor-dot.active{color:var(--gold);border-color:var(--gold-soft);background:var(--gold-soft)}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Tables */
-    table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid var(--line);padding:10px 12px;text-align:left}th{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
-    tr:hover td{background:rgba(245,184,0,.03)}
-    tr:nth-child(even) td{background:rgba(255,255,255,.015)}
+html { font-size: 15px; }
 
-    .hidden{display:none}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-  </style>
+body {
+  font-family: var(--font);
+  background: var(--bg-deep);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--line-light); }
+
+/* ── Layout ── */
+.wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* =========================================================
+   Header
+   ========================================================= */
+.header {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+.header-logo .icon-placeholder {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.header-logo .icon-placeholder img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.header-logo .brand {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+.header-logo .sub {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 14px;
+  margin-left: 2px;
+}
+
+/* ── Tab Navigation ── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 3px;
+}
+.tab {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 8px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+
+/* =========================================================
+   Section / Panel
+   ========================================================= */
+.section {
+  display: none;
+  padding: 24px 0 40px;
+}
+.section.active { display: block; }
+
+/* Tab 内容区与全局背景做区分 */
+#sectionScreen,
+#sectionHistory,
+#sectionKeywords {
+  border-radius: var(--radius-lg);
+  background: var(--bg-section);
+  padding-left: 24px;
+  padding-right: 24px;
+  margin-top: 4px;
+}
+
+.panel {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+/* =========================================================
+   Button
+   ========================================================= */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--gold-gradient);
+  color: #0a0f1f;
+}
+.btn-primary:hover {
+  box-shadow: 0 4px 16px var(--gold-glow);
+}
+.btn-primary:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.btn-secondary {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+.btn-secondary:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--line-light);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  padding: 6px 12px;
+  font-weight: 500;
+}
+.btn-ghost:hover { color: var(--text); }
+.btn-danger {
+  background: var(--bad-bg);
+  color: var(--bad);
+  border: 1px solid rgba(239,68,68,.25);
+}
+.btn-danger:hover {
+  background: rgba(239,68,68,.2);
+}
+
+/* =========================================================
+   Input
+   ========================================================= */
+input, textarea, select {
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: var(--font);
+  outline: none;
+  transition: border-color .2s;
+  width: 100%;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+textarea {
+  resize: vertical;
+  font-family: var(--mono);
+  min-height: 120px;
+}
+
+/* ── Date Range Picker ── */
+.date-range-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+.date-range-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+.date-range-inputs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.date-input {
+  width: 160px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color-scheme: dark;
+  background: var(--bg-input);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-family: var(--font);
+  outline: none;
+  transition: border-color .2s;
+  cursor: pointer;
+}
+.date-input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+.date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+  cursor: pointer;
+}
+.date-range-sep {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.date-range-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* =========================================================
+   Status / Hint
+   ========================================================= */
+.hint {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 6px;
+}
+.status-bar {
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-bar.info { background: var(--info-bg); border: 1px solid rgba(96,165,250,.25); }
+.status-bar.ok   { background: var(--ok-bg);   border: 1px solid rgba(34,197,94,.25); }
+.status-bar.warn { background: var(--warn-bg); border: 1px solid rgba(245,158,11,.25); }
+.status-bar.bad  { background: var(--bad-bg);  border: 1px solid rgba(239,68,68,.25); }
+
+/* =========================================================
+   Grid / Metric
+   ========================================================= */
+.grid { display: grid; gap: 12px; }
+.grid-2 { grid-template-columns: 1fr 1fr; }
+.grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+.metric {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+}
+.metric .k {
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  margin-bottom: 4px;
+}
+.metric .v {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   Tag / Badge
+   ========================================================= */
+.tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.tag-low    { background: var(--ok-bg);   color: var(--ok); }
+.tag-medium { background: var(--warn-bg); color: var(--warn); }
+.tag-high   { background: var(--bad-bg);  color: var(--bad); }
+.tag-info   { background: var(--info-bg); color: var(--info); }
+
+.dot {
+  display: inline-block;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-ok  { background: var(--ok); }
+.dot-warn{ background: var(--warn); }
+.dot-bad { background: var(--bad); }
+
+/* =========================================================
+   Row helpers
+   ========================================================= */
+.row { display: flex; align-items: center; gap: 10px; }
+.row-between { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.col { display: flex; flex-direction: column; gap: 6px; }
+.mt-8  { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mb-8  { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.gap-4 { gap: 4px; }
+.gap-8 { gap: 8px; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-1 { flex: 1; }
+.text-center { text-align: center; }
+.text-muted { color: var(--text-muted); }
+.text-sm { font-size: 13px; }
+
+/* =========================================================
+   Placeholder area (for Step 1 visual reference)
+   ========================================================= */
+.placeholder-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 240px;
+  border: 2px dashed var(--line-light);
+  border-radius: var(--radius-lg);
+  color: var(--text-muted);
+  font-size: 14px;
+  gap: 12px;
+}
+.placeholder-zone .icon-big { font-size: 40px; opacity: .3; }
+
+/* ── Status banner for API health ── */
+.api-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+.api-banner.all-ok {
+  background: rgba(34,197,94,.06);
+  border: 1px solid rgba(34,197,94,.2);
+  color: var(--ok);
+}
+.api-banner.warning {
+  background: var(--warn-bg);
+  border: 1px solid rgba(245,158,11,.25);
+  color: var(--warn);
+}
+.api-banner.bad {
+  background: var(--bad-bg);
+  border: 1px solid rgba(239,68,68,.25);
+  color: var(--bad);
+}
+
+/* =========================================================
+   Screening Progress — Step 2
+   ========================================================= */
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.screening-progress {
+  animation: fadeIn .4s ease-out;
+}
+
+/* Progress bar */
+.progress-track {
+  width: 100%;
+  height: 4px;
+  background: var(--line);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--gold-gradient);
+  border-radius: 2px;
+  transition: width .6s ease;
+  width: 0%;
+}
+
+/* Step list */
+.step-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.step-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  transition: all .3s;
+  font-size: 13px;
+}
+.step-row.pending { opacity: .35; }
+.step-row.active {
+  background: var(--gold-soft);
+  border: 1px solid rgba(255,192,0,.2);
+}
+.step-row.done { opacity: .8; }
+
+.step-icon {
+  width: 22px;
+  text-align: center;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.step-label { flex: 1; }
+.step-status { color: var(--text-muted); font-size: 12px; }
+.step-row.active .step-status { color: var(--gold); font-weight: 600; animation: pulse 1.2s ease-in-out infinite; }
+
+/* Log stream */
+.log-stream {
+  background: var(--bg-input);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  max-height: 160px;
+  overflow-y: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.7;
+  margin-top: 8px;
+}
+.log-stream .log-line {
+  opacity: 0;
+  animation: fadeIn .3s ease-out forwards;
+}
+.log-stream .log-line.done { opacity: .6; }
+.log-stream .log-line.active { opacity: 1; color: var(--gold); }
+.log-stream .log-line.error { color: var(--bad); }
+
+/* Batch summary during progress */
+.batch-progress-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.batch-stat {
+  text-align: center;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+}
+.batch-stat .num { font-size: 24px; font-weight: 700; }
+.batch-stat .lbl { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.batch-stat.ok .num { color: var(--ok); }
+.batch-stat.warn .num { color: var(--warn); }
+.batch-stat.bad .num { color: var(--bad); }
+
+/* Cancel btn */
+.btn-cancel {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--line);
+  padding: 6px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 12px;
+  transition: all .2s;
+}
+.btn-cancel:hover { color: var(--bad); border-color: rgba(239,68,68,.3); }
+
+/* Search panel compact state */
+.search-panel-compact { padding: 12px 20px; }
+.search-panel-compact textarea { min-height: 60px; }
+.search-panel-compact .mb-16 { margin-bottom: 8px; }
+
+/* =========================================================
+   Creator Info Card — Step 3
+   ========================================================= */
+@keyframes slideDown{from{max-height:0;opacity:0}to{max-height:600px;opacity:1}}
+
+.result-view { animation: fadeIn .4s ease-out; }
+
+.creator-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0;
+}
+.creator-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  border: 2px solid rgba(255,192,0,.2);
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--gold);
+}
+.creator-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.creator-meta { flex: 1; min-width: 0; }
+.creator-name { font-size: 18px; font-weight: 700; }
+.creator-handle { color: var(--text-muted); font-size: 13px; }
+.creator-stats {
+  display: flex;
+  gap: 20px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.creator-stat { font-size: 13px; color: var(--text-muted); }
+.creator-stat strong { color: var(--text); font-weight: 600; }
+
+.creator-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   Layer Cards — Step 4 (可复用核心组件)
+   ========================================================= */
+.layer-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  overflow: hidden;
+  transition: border-color .2s;
+  margin-bottom: 8px;
+}
+.layer-card:hover { border-color: var(--line-light); }
+
+/* Title bar — always visible */
+.layer-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .2s;
+}
+.layer-header:hover { background: var(--bg-card-hover); }
+.layer-dot { flex-shrink: 0; }
+.layer-name { flex: 1; font-size: 14px; font-weight: 600; }
+.layer-score {
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.layer-arrow {
+  color: var(--text-muted);
+  font-size: 12px;
+  transition: transform .3s;
+  flex-shrink: 0;
+}
+.layer-card.expanded .layer-arrow { transform: rotate(180deg); }
+
+/* ── Layer Drawer (滑动抽屉) ── */
+.layer-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity .3s ease;
+  pointer-events: none;
+}
+.layer-drawer-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+.layer-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 600px;
+  max-width: 90vw;
+  height: 100vh;
+  background: var(--bg-card);
+  border-left: 1px solid var(--line);
+  z-index: 1001;
+  transform: translateX(100%);
+  transition: transform .35s cubic-bezier(.22,1,.36,1);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 40px rgba(0,0,0,.5);
+}
+.layer-drawer.open {
+  transform: translateX(0);
+}
+.layer-drawer-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+  background: var(--bg);
+}
+.layer-drawer-header .dd-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.layer-drawer-header .dd-name {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 700;
+}
+.layer-drawer-header .dd-score {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.layer-drawer-header .dd-close {
+  width: 32px; height: 32px;
+  border: none;
+  background: var(--bg-input);
+  color: var(--text-muted);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .2s;
+  flex-shrink: 0;
+}
+.layer-drawer-header .dd-close:hover {
+  background: var(--bad-bg);
+  color: var(--bad);
+}
+.layer-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.layer-drawer-body .section-title {
+  margin-top: 16px;
+}
+.layer-drawer-body .section-title:first-child {
+  margin-top: 0;
+}
+/* Drawer signal list - full height, no artificial limit */
+.layer-drawer-body .signal-list {
+  max-height: none;
+  overflow-y: visible;
+}
+
+/* Layer cards: only header shown, arrow hints drawer */
+.sub-items { padding: 12px 0; }
+.layer-card .layer-body {
+  display: none;
+}
+.layer-card .layer-arrow {
+  font-size: 11px;
+  opacity: .5;
+}
+.layer-card .layer-header .layer-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+/* Layer cards: only header shown, arrow hints drawer */
+.sub-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(30,42,79,.4);
+}
+.sub-item:last-child { border-bottom: none; }
+.sub-item .lbl { color: var(--text-muted); }
+.sub-item .val { font-weight: 500; text-align: right; }
+.sub-item .val.good { color: var(--ok); }
+.sub-item .val.warn { color: var(--warn); }
+.sub-item .val.bad  { color: var(--bad); }
+
+/* Section divider */
+.section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+  padding: 10px 0 6px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 4px;
+}
+
+/* Risk signals */
+.signal-list { padding: 8px 0; max-height: 400px; overflow-y: auto; }
+.signal-item {
+  padding: 8px 10px;
+  border-radius: var(--radius);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  margin-bottom: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.signal-item .signal-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.signal-item .signal-date { color: var(--text-muted); font-size: 12px; }
+.signal-item .signal-text { color: var(--text); word-break: break-word; }
+.signal-item .signal-evidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+.signal-item .signal-evidence a {
+  color: var(--info);
+  text-decoration: none;
+  word-break: break-all;
+}
+.signal-item .signal-evidence a:hover { text-decoration: underline; }
+.signal-item .signal-kws {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+/* Keyword tags */
+.kw-cloud { padding: 8px 0; display: flex; gap: 5px; flex-wrap: wrap; }
+.kw-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.kw-tag.critical { background: var(--bad-bg); color: var(--bad); border: 1px solid rgba(239,68,68,.2); }
+.kw-tag.warning  { background: var(--warn-bg); color: var(--warn); border: 1px solid rgba(245,158,11,.2); }
+.kw-tag.info     { background: var(--info-bg); color: var(--info); border: 1px solid rgba(96,165,250,.2); }
+
+/* Section header badge */
+.section-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  margin-left: 6px;
+}
+.section-badge.good { background: var(--ok-bg); color: var(--ok); }
+.section-badge.warn { background: var(--warn-bg); color: var(--warn); }
+.section-badge.bad  { background: var(--bad-bg); color: var(--bad); }
+
+/* =========================================================
+   Summary Panel — Step 5: 综合评分仪表盘 + 判定结论
+   ========================================================= */
+.result-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 24px;
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  margin-bottom: 12px;
+  position: relative;
+  overflow: hidden;
+}
+.result-summary::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--gold-gradient);
+  opacity: .5;
+}
+
+/* Left: Score ring */
+.summary-left { flex-shrink: 0; }
+
+.score-ring {
+  position: relative;
+  width: 110px;
+  height: 110px;
+}
+.score-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.ring-bg {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 8;
+}
+.ring-fill {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s ease, stroke .6s ease;
+}
+.ring-fill.ok  { stroke: var(--ok); }
+.ring-fill.warn{ stroke: var(--warn); }
+.ring-fill.bad { stroke: var(--bad); }
+
+.score-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.score-num {
+  font-size: 30px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.score-num.ok  { color: var(--ok); }
+.score-num.warn{ color: var(--warn); }
+.score-num.bad { color: var(--bad); }
+.score-lbl {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  letter-spacing: .3px;
+}
+
+/* Middle: Verdict + veto flags */
+.summary-middle { flex: 1; min-width: 0; }
+
+.verdict-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.verdict-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .3px;
+}
+.verdict-badge.approve { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(34,197,94,.25); }
+.verdict-badge.review  { background: var(--warn-bg); color: var(--warn); border: 1px solid rgba(245,158,11,.25); }
+.verdict-badge.reject  { background: var(--bad-bg); color: var(--bad); border: 1px solid rgba(239,68,68,.25); }
+
+.verdict-time {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.veto-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.veto-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--bad-bg);
+  border: 1px solid rgba(239,68,68,.2);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--bad);
+  font-weight: 500;
+}
+
+/* Right: Actions */
+.summary-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.summary-actions .btn {
+  justify-content: center;
+  min-width: 120px;
+}
+
+/* =========================================================
+   Layer Mini Row — 六层速览 (Summary 下方)
+   ========================================================= */
+.layer-mini-row {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  width: 100%;
+}
+.layer-mini {
+  text-align: center;
+  padding: 10px 4px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--bg);
+  transition: border-color .2s;
+  cursor: default;
+}
+.layer-mini:hover { border-color: var(--line-light); }
+.layer-mini .mini-num {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.layer-mini .mini-score {
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.layer-mini .mini-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 4px;
+}
+.layer-mini .mini-dot.ok  { background: var(--ok); }
+.layer-mini .mini-dot.warn{ background: var(--warn); }
+.layer-mini .mini-dot.bad { background: var(--bad); }
+
+/* =========================================================
+   Batch Results Table — Step 6
+   ========================================================= */
+.batch-view { animation: fadeIn .4s ease-out; }
+
+.batch-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.batch-header-title {
+  font-size: 17px;
+  font-weight: 700;
+}
+.batch-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.batch-counts {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.batch-count {
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.batch-count.approve { background: var(--ok-bg); color: var(--ok); border: 1px solid rgba(34,197,94,.2); }
+.batch-count.review  { background: var(--warn-bg); color: var(--warn); border: 1px solid rgba(245,158,11,.2); }
+.batch-count.reject  { background: var(--bad-bg); color: var(--bad); border: 1px solid rgba(239,68,68,.2); }
+.batch-count .num { font-size: 20px; font-weight: 800; }
+
+.batch-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+}
+.batch-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.batch-table th {
+  text-align: left;
+  padding: 12px 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+  white-space: nowrap;
+}
+.batch-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(30,42,79,.4);
+  vertical-align: middle;
+}
+.batch-table tr:last-child td { border-bottom: none; }
+.batch-table tr:hover td { background: var(--bg-card-hover); }
+.batch-table .col-name {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.batch-table .col-name .avatar-mini {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  border: 1px solid rgba(255,192,0,.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.batch-table .col-score {
+  font-weight: 800;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.batch-table .col-risk {
+  max-width: 180px;
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.batch-table .btn-sm {
+  padding: 4px 12px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.batch-table .btn-sm:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--line-light);
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 6px 0;
+  transition: color .2s;
+}
+.back-link:hover { color: var(--text); }
+
+/* =========================================================
+   History — Step 7
+   ========================================================= */
+.history-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.history-toolbar .search-wrap {
+  flex: 1;
+  min-width: 200px;
+  position: relative;
+}
+.history-toolbar .search-wrap input {
+  padding-left: 34px;
+}
+.history-toolbar .search-wrap .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+.history-filter {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.history-filter select {
+  width: auto;
+  padding: 8px 30px 8px 12px;
+  font-size: 13px;
+  background: var(--bg-input);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%238891b5' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+.history-filter select:focus { border-color: var(--gold); }
+
+.history-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.history-stat {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.history-stat strong { color: var(--text); }
+
+.history-list { }
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.history-item:hover {
+  border-color: var(--line-light);
+  background: var(--bg-card-hover);
+}
+.history-item .h-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  border: 1px solid rgba(255,192,0,.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.history-item .h-info { flex: 1; min-width: 0; }
+.history-item .h-name { font-weight: 600; font-size: 14px; }
+.history-item .h-meta { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+.history-item .h-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.history-item .h-score {
+  font-size: 18px;
+  font-weight: 800;
+  min-width: 36px;
+  text-align: center;
+}
+.history-item .h-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity .2s;
+}
+.history-item:hover .h-actions { opacity: 1; }
+.history-item .h-actions .btn-icon {
+  width: 28px; height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all .2s;
+}
+.history-item .h-actions .btn-icon:hover { background: var(--bg-card-hover); color: var(--text); }
+.history-item .h-actions .btn-icon.danger:hover { background: var(--bad-bg); color: var(--bad); }
+
+.history-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.history-empty .icon-big { font-size: 36px; margin-bottom: 8px; opacity: .4; }
+
+/* =========================================================
+   Toast 通知 — Step 8
+   ========================================================= */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  padding: 10px 18px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: toastIn .35s ease-out;
+  pointer-events: auto;
+  max-width: 360px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.4);
+}
+.toast.info    { background: var(--bg-card); border: 1px solid var(--line); color: var(--text); }
+.toast.success { background: rgba(34,197,94,.12); border: 1px solid rgba(34,197,94,.25); color: var(--ok); }
+.toast.warn    { background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.25); color: var(--warn); }
+.toast.error   { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.25); color: var(--bad); }
+
+@keyframes toastIn { from { opacity:0; transform:translateY(12px) scale(.96); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes toastOut { from { opacity:1; transform:translateY(0) scale(1); } to { opacity:0; transform:translateY(8px) scale(.96); } }
+.toast.out { animation: toastOut .25s ease-in forwards; }
+
+/* =========================================================
+   Responsive — Step 8
+   ========================================================= */
+@media (max-width: 900px) {
+  .header-inner { flex-direction: column; gap: 10px; }
+  .tabs { width: 100%; }
+  .tab { flex: 1; text-align: center; padding: 8px 0; font-size: 12px; }
+  .result-summary { flex-direction: column; text-align: center; }
+  .summary-actions { flex-direction: row; width: 100%; justify-content: center; }
+  .layer-mini-row { grid-template-columns: repeat(3, 1fr); }
+  .summary-middle { width: 100%; }
+  .verdict-row { justify-content: center; }
+}
+@media (max-width: 600px) {
+  .wrap { padding: 0 12px; }
+  .layer-mini-row { grid-template-columns: repeat(2, 1fr); }
+  .batch-counts { flex-direction: column; }
+  .history-toolbar { flex-direction: column; }
+  .history-toolbar .search-wrap { width: 100%; }
+  .history-filter { width: 100%; }
+  .history-filter select { flex: 1; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .creator-card { flex-direction: column; text-align: center; }
+  .creator-stats { justify-content: center; }
+}
+
+/* =========================================================
+   Tab active underline animation
+   ========================================================= */
+.tab { position: relative; }
+.tab::after {
+  content: '';
+  position: absolute;
+  bottom: 2px; left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--gold);
+  border-radius: 1px;
+  transition: all .3s ease;
+  transform: translateX(-50%);
+}
+.tab.active::after { width: 60%; }
+
+/* =========================================================
+   Misc polish
+   ========================================================= */
+/* Smooth scroll */
+html { scroll-behavior: smooth; }
+
+/* Selection color */
+::selection { background: var(--gold-soft); color: var(--gold); }
+
+/* Focus visible for accessibility */
+:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* Subtle card hover lift */
+.panel { transition: border-color .25s, box-shadow .25s; }
+.panel:hover { border-color: var(--line-light); }
+
+/* Skeleton shimmer for loading state */
+@keyframes skeleton{0%{background-position:-200px 0}100%{background-position:calc(200px + 100%) 0}}
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+  background-size: 200px 100%;
+  animation: skeleton 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+.skeleton-line { height: 14px; margin-bottom: 8px; width: 100%; }
+.skeleton-line.w60 { width: 60%; }
+.skeleton-line.w40 { width: 40%; }
+
+/* =========================================================
+   Keywords Management — 关键词库
+   ========================================================= */
+.kw-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.kw-toolbar .search-wrap {
+  flex: 1;
+  min-width: 180px;
+  position: relative;
+}
+.kw-toolbar .search-wrap input { padding-left: 34px; }
+.kw-toolbar .search-wrap .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.kw-subtabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 2px;
+  flex-shrink: 0;
+}
+.kw-subtab {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 6px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all .2s;
+  white-space: nowrap;
+}
+.kw-subtab:hover { color: var(--text); }
+.kw-subtab.active { background: var(--bg-card); color: var(--text); }
+
+.kw-category {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.kw-category-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  user-select: none;
+  transition: background .2s;
+}
+.kw-category-header:hover { background: var(--bg-card-hover); }
+.kw-category-header .cat-sev {
+  width: 4px; height: 24px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.kw-category-header .cat-sev.critical { background: var(--bad); }
+.kw-category-header .cat-sev.warning  { background: var(--warn); }
+.kw-category-header .cat-sev.info     { background: var(--info); }
+.kw-category-header .cat-name { font-weight: 600; font-size: 14px; flex: 1; }
+.kw-category-header .cat-desc { font-size: 12px; color: var(--text-muted); }
+.kw-category-header .cat-count {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 2px 8px;
+  background: var(--bg);
+  border-radius: 12px;
+}
+.kw-category-header .cat-arrow {
+  color: var(--text-muted);
+  font-size: 11px;
+  transition: transform .3s;
+}
+.kw-category.expanded .cat-arrow { transform: rotate(180deg); }
+
+.kw-category-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .3s ease;
+}
+.kw-category.expanded .kw-category-body { max-height: 800px; }
+
+.kw-tags-wrap {
+  padding: 8px 16px 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.kw-tag-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  transition: all .2s;
+}
+.kw-tag-item:hover { border-color: var(--line-light); }
+.kw-tag-item .remove-kw {
+  cursor: pointer;
+  opacity: .4;
+  font-size: 10px;
+  transition: opacity .2s;
+}
+.kw-tag-item .remove-kw:hover { opacity: 1; color: var(--bad); }
+.kw-tag-item.critical { border-color: rgba(239,68,68,.2); color: var(--bad); }
+.kw-tag-item.warning  { border-color: rgba(245,158,11,.2); color: var(--warn); }
+.kw-tag-item.info     { border-color: rgba(96,165,250,.2); color: var(--info); }
+
+.kw-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  border: 1px dashed var(--line);
+  background: transparent;
+  color: var(--text-muted);
+  transition: all .2s;
+}
+.kw-add-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+.kw-add-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.kw-add-input input {
+  width: 140px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 20px;
+}
+.kw-add-input .btn-sm {
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+}
+.kw-add-input .btn-sm:hover { background: var(--bg-card-hover); }
+
+.kw-actions-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.kw-actions-bar .text-muted { font-size: 12px; }
+.kw-actions-bar .btn {
+  font-size: 13px;
+  padding: 8px 16px;
+}
+</style>
 </head>
 <body>
+
+<!-- =========================================================
+     HEADER
+     ========================================================= -->
+<header class="header">
+  <div class="wrap header-inner">
+    <div class="header-logo">
+      <div class="icon-placeholder"><img src="nrc_logo.png" alt="NRCG"></div>
+      <span class="brand">NRCG</span>
+      <span class="sub">创作者 AI 背调系统</span>
+    </div>
+    <nav class="tabs" id="tabNav">
+      <button class="tab active" data-tab="screen">🔍 筛查</button>
+      <button class="tab" data-tab="history">📋 历史记录</button>
+      <button class="tab" data-tab="keywords">🏷️ 关键词库</button>
+    </nav>
+  </div>
+</header>
+
+<!-- =========================================================
+     MAIN CONTENT
+     ========================================================= -->
 <div class="wrap">
-  <h1 class="title"><span>洛克王国世界</span> · 主播风险筛查</h1>
-  <div class="sub">
-    <span>六层AI筛查 · YouTube 创作者背调 · v3.2 · 正常加载中...</span>
-    <span id="configHint" style="font-size:12px;opacity:.7;"></span>
+
+  <!-- ── API 状态横幅 ── -->
+  <div class="api-banner all-ok" id="apiBanner">
+    <span class="dot dot-ok"></span>
+    <span>API 状态检查中…</span>
   </div>
 
-  <!-- API 状态横幅 -->
-  <div id="apiBanner" class="api-banner hidden"></div>
+  <!-- ════════════════════════════════════════════════════════
+       TAB 1: 筛查
+       ════════════════════════════════════════════════════════ -->
+  <section class="section active" id="sectionScreen">
 
-  <!-- Top tabs -->
-  <div class="tabs">
-    <button class="tab active" data-tab="screen">🗂️ 创作者筛查</button>
-    <button class="tab" data-tab="history">📋 历史记录</button>
-  </div>
+    <!-- 搜索区 -->
+    <div class="panel" id="searchPanel">
+      <div class="row-between mb-16">
+        <strong style="font-size:15px;">输入创作者链接</strong>
+        <span class="text-muted text-sm">支持 YouTube 平台链接</span>
+      </div>
+      <textarea id="urlInput" placeholder="粘贴创作者链接，每行一个，支持批量：
+https://www.youtube.com/@PokemonChallenges
+https://www.youtube.com/@MandJTV_Playthrough
+https://www.twitch.tv/smallant"></textarea>
 
-  <!-- ===== 单条筛查 ===== -->
-  <section id="tab-screen" class="tab-pane">
-
-    <!-- 搜索视图（初始状态） -->
-    <div id="searchView">
-      <div class="panel" id="searchCard">
-        <div class="row" style="grid-template-columns:1fr auto;">
-          <textarea id="urlInput" rows="4" placeholder="输入 YouTube 创作者链接，每行一个"></textarea>
-          <button id="startBtn" style="align-self:flex-start;">开始筛查</button>
+      <!-- ── 日期区间选择 ── -->
+      <div class="date-range-row mt-8">
+        <span class="date-range-label">📅 视频回溯区间</span>
+        <div class="date-range-inputs">
+          <input type="date" id="dateFrom" class="date-input" title="起始日期（可选）">
+          <span class="date-range-sep">~</span>
+          <input type="date" id="dateTo" class="date-input" title="截止日期（可选，不填则默认起始+6个月）">
         </div>
-        <div class="hint" id="urlHint">输入 1 条 = 单条深度筛查 · 输入多条 = 批量筛查（每行一个URL）</div>
+        <span class="date-range-hint">不选则回溯最近视频 · 最大区间 6 个月</span>
       </div>
-    </div>
 
-    <!-- 筛查进行中 / 批量进度卡片 -->
-    <div id="screeningCard" class="screening-card hidden">
-      <div class="shimmer-bar"></div>
-      <div class="sc-body">
-        <div class="sc-title"><span class="loading-dots" id="screeningTitle">正在进行六层AI筛查</span></div>
-        <div class="sc-sub" id="screeningSub">提交任务成功，正在启动分析引擎...</div>
-        <div class="trace-steps" id="traceSteps"></div>
-      </div>
-    </div>
-
-    <!-- 结果视图（单条结果） -->
-    <div id="resultView" class="hidden">
-      <button class="back-link" id="backToSearch">← 返回搜索</button>
-
-      <!-- 综合评分 & 判定 -->
-      <div class="panel">
-        <div class="gauge-wrap">
-          <div class="gauge-ring">
-            <svg viewBox="0 0 120 120" width="120" height="120">
-              <circle cx="60" cy="60" r="50" fill="none" stroke="var(--bg-card)" stroke-width="8"/>
-              <circle id="gaugeArc" cx="60" cy="60" r="50" fill="none" stroke="var(--gold)" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 314" stroke-dashoffset="0"/>
-            </svg>
-            <div class="score-text"><div id="scoreVal">-</div><div class="score-label">综合评分</div></div>
-          </div>
-          <div class="verdict-banner review" id="verdictBanner">
-            <div style="font-size:12px;font-weight:500;margin-bottom:4px;opacity:.8;">筛查判定</div>
-            <div id="verdictVal" style="font-size:20px;">-</div>
+      <div class="row-between mt-8">
+          <span class="hint" id="urlHint">💡 当前 0 个链接 · 支持 YouTube</span>
+          <div class="row gap-4">
+            <button class="btn btn-secondary" id="btnClear">清空</button>
+            <button class="btn btn-primary" id="btnStart" disabled>🚀 开始筛查</button>
           </div>
         </div>
-        <div class="grid grid-4" style="margin-bottom:14px;">
-          <div class="metric"><div class="k">创作者</div><div class="v" id="creatorVal" style="font-size:15px;">-</div></div>
-          <div class="metric"><div class="k">平台</div><div class="v" id="platformVal" style="font-size:15px;">-</div></div>
-          <div class="metric"><div class="k">粉丝数</div><div class="v" id="subsVal" style="font-size:15px;">-</div></div>
-          <div class="metric"><div class="k">国家/地区</div><div class="v" id="countryVal" style="font-size:15px;">-</div></div>
-        </div>
-        <div id="vetoBlock" class="status bad hidden"></div>
-        <div class="actions">
-          <button id="singleExportBtn" class="secondary">📥 导出 Excel 报告</button>
-        </div>
-      </div>
-
-      <!-- 层导航 + 展开/折叠 -->
-      <div class="anchor-nav" id="anchorNav">
-        <span style="color:var(--muted);font-size:11px;margin-right:4px;">快速跳转：</span>
-        <a class="anchor-dot" href="#layer-1">📊 L1</a>
-        <a class="anchor-dot" href="#layer-2">📝 L2</a>
-        <a class="anchor-dot" href="#layer-3">🛡️ L3</a>
-        <a class="anchor-dot" href="#layer-4">🏷️ L4</a>
-        <a class="anchor-dot" href="#layer-5">🎮 L5</a>
-        <a class="anchor-dot" href="#layer-6">📈 L6</a>
-        <span style="flex:1;"></span>
-        <button class="ghost" id="expandAllBtn">全部展开</button>
-        <button class="ghost" id="collapseAllBtn">全部折叠</button>
-      </div>
-
-      <!-- 六层结果 -->
-      <div id="layersBox"></div>
     </div>
 
-    <!-- 批量结果表（出现在同 Tab 内） -->
-    <div id="batchResultPanel" class="hidden">
-      <button class="back-link" id="backToSearch2">← 返回搜索</button>
-      <div class="panel">
-        <div id="batchStatusInline" class="status info"></div>
-        <div class="actions" style="margin-bottom:10px;">
-          <button id="batchExportInline" class="secondary">📥 导出该批次 Excel</button>
+    <!-- Tips 占位（后续可替换为"最近筛查"快捷入口） -->
+    <div class="panel" style="padding:14px 20px;">
+      <div class="row-between">
+        <span class="text-muted text-sm">📎 将创作者链接粘贴到上方输入框，点击"开始筛查"即可自动执行六层风险评估</span>
+        <div class="row gap-4">
+        <span class="tag tag-info">v1.0</span>
         </div>
       </div>
-      <div class="panel">
-        <table><thead><tr><th>创建时间</th><th>创作者</th><th>平台</th><th>状态</th><th>评分</th><th>判定</th><th>操作</th></tr></thead><tbody id="batchTbody"></tbody></table>
+    </div>
+
+    <!-- 结果区 -->
+    <div id="resultArea">
+
+      <!-- 筛查进度（初始隐藏） -->
+      <div class="panel screening-progress" id="progressPanel" style="display:none;">
+        <div class="row-between mb-16">
+          <strong style="font-size:15px;">
+            <span id="progressTitle">正在执行筛查</span>
+          </strong>
+          <button class="btn-cancel" id="btnCancel">取消</button>
+        </div>
+
+        <!-- 批量模式统计 -->
+        <div class="batch-progress-summary" id="batchStats" style="display:none;">
+          <div class="batch-stat ok">
+            <div class="num" id="batchDone">0</div>
+            <div class="lbl">已完成</div>
+          </div>
+          <div class="batch-stat" id="batchRunningStat">
+            <div class="num" id="batchRunning">0</div>
+            <div class="lbl">进行中</div>
+          </div>
+          <div class="batch-stat" id="batchFailedStat">
+            <div class="num" id="batchFailed">0</div>
+            <div class="lbl">失败</div>
+          </div>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="progress-track">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- 六层步骤 -->
+        <div class="step-list" id="stepList">
+          <div class="step-row active" data-step="1">
+            <span class="step-icon">⏳</span>
+            <span class="step-label">L1 · 基础数据真实性验证</span>
+            <span class="step-status">进行中...</span>
+          </div>
+          <div class="step-row pending" data-step="2">
+            <span class="step-icon">⬜</span>
+            <span class="step-label">L2 · 内容历史全量回溯</span>
+            <span class="step-status">等待</span>
+          </div>
+          <div class="step-row pending" data-step="3">
+            <span class="step-icon">⬜</span>
+            <span class="step-label">L3 · 政治敏感信号检测</span>
+            <span class="step-status">等待</span>
+          </div>
+          <div class="step-row pending" data-step="4">
+            <span class="step-icon">⬜</span>
+            <span class="step-label">L4 · 品牌安全综合评分</span>
+            <span class="step-status">等待</span>
+          </div>
+          <div class="step-row pending" data-step="5">
+            <span class="step-icon">⬜</span>
+            <span class="step-label">L5 · 竞争关系图谱分析</span>
+            <span class="step-status">等待</span>
+          </div>
+          <div class="step-row pending" data-step="6">
+            <span class="step-icon">⬜</span>
+            <span class="step-label">L6 · 影响力真实性验证</span>
+            <span class="step-status">等待</span>
+          </div>
+        </div>
+
+        <!-- 日志流 -->
+        <div class="log-stream" id="logStream"></div>
+      </div>
+
+      <!-- 空状态 -->
+      <div id="emptyState">
+        <div class="placeholder-zone">
+          <div class="icon-big">🔍</div>
+          <div>暂无筛查结果 · 输入链接后点击开始筛查</div>
+          <div class="text-muted text-sm" style="max-width:420px;text-align:center;">
+            系统将依次执行: 数据真实性验证 → 内容回溯 → 政治检测 → 品牌安全 → 竞争分析 → 影响力评估
+          </div>
+        </div>
+      </div>
+
+      <!-- ================================================
+           批量结果汇总视图 (Step 6)
+           ================================================ -->
+      <div class="batch-view" id="batchView" style="display:none;">
+        <div class="panel">
+          <div class="batch-header">
+            <span class="batch-header-title" id="batchViewTitle">批量筛查结果</span>
+            <div class="batch-header-actions">
+              <button class="btn btn-ghost" id="btnBatchBack" style="font-size:13px;">← 返回搜索</button>
+              <button class="btn btn-secondary" id="btnBatchExport">📥 导出汇总</button>
+            </div>
+          </div>
+          <div class="batch-counts" id="batchCounts"></div>
+          <div class="batch-table-wrap">
+            <table class="batch-table">
+              <thead>
+                <tr>
+                  <th>创作者</th>
+                  <th>平台</th>
+                  <th style="text-align:center;">评分</th>
+                  <th>判定</th>
+                  <th>主要风险</th>
+                  <th style="text-align:center;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="batchTableBody"></tbody>
+            </table>
+          </div>
+          <div class="text-muted text-sm mt-16" id="batchSummary"></div>
+        </div>
+      </div>
+
+      <!-- ================================================
+           结果展示视图 (Step 3 + Step 4)
+           ================================================ -->
+      <div class="result-view" id="resultView" style="display:none;">
+
+        <!-- 综合评分仪表盘 + 判定结论 -->
+        <div class="result-summary panel" id="summaryPanel">
+          <div class="summary-left">
+            <div class="score-ring" id="scoreRing">
+              <svg viewBox="0 0 120 120">
+                <circle class="ring-bg" cx="60" cy="60" r="52"/>
+                <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="52"
+                  stroke-dasharray="326.73" stroke-dashoffset="326.73"/>
+              </svg>
+              <div class="score-text">
+                <span class="score-num" id="scoreNum">—</span>
+                <span class="score-lbl">综合评分</span>
+              </div>
+            </div>
+          </div>
+          <div class="summary-middle">
+            <div class="verdict-row">
+              <span class="verdict-badge" id="verdictBadge">—</span>
+              <span class="verdict-time" id="verdictTime"></span>
+            </div>
+            <div class="veto-list" id="vetoList"></div>
+          </div>
+          <div class="summary-actions">
+            <button class="btn btn-secondary" id="btnExport">📥 导出报告</button>
+            <button class="btn btn-ghost" id="btnRerun" style="font-size:13px;">🔄 重新筛查</button>
+          </div>
+          <!-- 六层速览分数（嵌入仪表盘内） -->
+          <div class="layer-mini-row" id="layerMiniRow"></div>
+        </div>
+
+        <!-- 创作者基本信息卡片 -->
+        <div class="panel">
+          <div class="creator-card" id="creatorCard"></div>
+        </div>
+
+        <!-- 六层详情卡片容器 -->
+        <div id="layersContainer"></div>
+
+      </div><!-- /.result-view -->
+    </div>
+
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════
+       TAB 2: 历史记录
+       ════════════════════════════════════════════════════════ -->
+  <section class="section" id="sectionHistory">
+    <div class="panel">
+      <!-- 工具栏 -->
+      <div class="history-toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="historySearch" placeholder="搜索创作者名称...">
+        </div>
+        <div class="history-filter">
+          <select id="filterVerdict">
+            <option value="">全部判定</option>
+            <option value="approve">✅ 通过</option>
+            <option value="review">⚠️ 复核</option>
+            <option value="reject">🚫 拒绝</option>
+          </select>
+          <select id="filterDate">
+            <option value="">全部时间</option>
+            <option value="today">今天</option>
+            <option value="7d">近7天</option>
+            <option value="30d">近30天</option>
+            <option value="90d">近90天</option>
+          </select>
+        </div>
+        <button class="btn btn-ghost" id="btnRefreshHistory" style="font-size:13px;">� 刷新</button>
+      </div>
+
+      <!-- 统计 -->
+      <div class="history-stats" id="historyStats">
+        <span class="history-stat">共 <strong id="histTotal">0</strong> 条记录</span>
+        <span class="history-stat">✅ 通过 <strong id="histApprove" style="color:var(--ok)">0</strong></span>
+        <span class="history-stat">⚠️ 复核 <strong id="histReview" style="color:var(--warn)">0</strong></span>
+        <span class="history-stat">🚫 拒绝 <strong id="histReject" style="color:var(--bad)">0</strong></span>
+      </div>
+
+      <!-- 列表 -->
+      <div class="history-list" id="historyList"></div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════
+       TAB 3: 关键词库
+       ════════════════════════════════════════════════════════ -->
+  <section class="section" id="sectionKeywords">
+    <div class="panel">
+      <div class="kw-toolbar">
+        <div class="search-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="kwSearch" placeholder="搜索关键词...">
+        </div>
+        <div class="kw-subtabs" id="kwSubTabs">
+          <button class="kw-subtab active" data-kwtab="political">🚩 政治敏感</button>
+          <button class="kw-subtab" data-kwtab="competitor">🎮 竞品分析</button>
+        </div>
+      </div>
+      <div id="kwContent"></div>
+      <div class="kw-actions-bar">
+        <span class="text-muted" id="kwTotalInfo"></span>
+        <div class="row gap-4">
+          <button class="btn btn-ghost" id="kwCollapseAll">全部折叠</button>
+          <button class="btn btn-ghost" id="kwExpandAll">全部展开</button>
+          <button class="btn btn-secondary" id="kwExport">📥 导出 JSON</button>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ===== 历史记录 ===== -->
-  <section id="tab-history" class="tab-pane hidden">
-    <div class="panel"><div class="row3"><input id="searchInput" placeholder="按名称/handle/URL 搜索" /><select id="verdictFilter"><option value="">全部判定</option><option value="approve">通过</option><option value="review">人工复核</option><option value="reject">拒绝</option></select><button id="historyBtn" class="secondary">查询</button></div></div>
-    <div class="panel"><table><thead><tr><th>创建时间</th><th>创作者</th><th>平台</th><th>评分</th><th>判定</th><th>操作</th></tr></thead><tbody id="historyTbody"></tbody></table></div>
-  </section>
+</div><!-- /.wrap -->
+
+<!-- ════════════════════════════════════════════════════════
+     层详情滑动抽屉
+     ════════════════════════════════════════════════════════ -->
+<div class="layer-drawer-backdrop" id="layerDrawerBackdrop" onclick="closeLayerDrawer()"></div>
+<div class="layer-drawer" id="layerDrawer">
+  <div class="layer-drawer-header">
+    <span class="dd-dot" id="ddDot"></span>
+    <span class="dd-name" id="ddName">L1 · 层名称</span>
+    <span class="dd-score" id="ddScore">—</span>
+    <span class="tag" id="ddTag">—</span>
+    <button class="dd-close" onclick="closeLayerDrawer()">✕</button>
+  </div>
+  <div class="layer-drawer-body" id="ddBody"></div>
 </div>
 
+<!-- Toast 通知容器 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- =========================================================
+     JavaScript — Step 2: API 服务层 + 筛查进度控制
+     ========================================================= -->
 <script>
-console.log('=== NRC Screening v3.2 - JS starting ===');
-try{
-// ==================== 工具函数 ====================
-const tabs=document.querySelectorAll('.tab');
-const panes={screen:gid('tab-screen'),history:gid('tab-history')};
-let currentScreenId='';let currentBatchId='';
-let allLayersExpanded=false;
-
-tabs.forEach(btn=>btn.addEventListener('click',()=>{
-  tabs.forEach(b=>b.classList.remove('active'));btn.classList.add('active');
-  Object.values(panes).forEach(p=>p.classList.add('hidden'));panes[btn.dataset.tab].classList.remove('hidden');
-}));
-
-function gid(id){return document.getElementById(id)}
-function esc(s){return String(s??'').replaceAll('<','&lt;').replaceAll('>','&gt;')}
-function verdictText(v){if(v==='approve')return '通过';if(v==='review')return '人工复核';if(v==='reject')return '拒绝';return v||'-'}
-function fmtScore(s){return typeof s==='number'?`${s}/100`:'-'}
-function setStatus(type,text,target){target.className=`status ${type}`;target.textContent=text;target.classList.remove('hidden')}
-
-// ==================== 改动1: API 预检横幅 ====================
-async function loadConfig(){
-  const [h,c]=await Promise.all([
-    fetch('/api/health').then(r=>r.json()),
-    fetch('/api/config-status').then(r=>r.json())
-  ]);
-  const el=gid('configHint');
-  if(el) el.innerHTML=`<span style="color:${h.db_ok?'var(--ok)':'var(--bad)'};">●</span> 数据库${h.db_ok?'正常':'异常'} · ${c.ready?'全部API就绪':'部分Key缺失'}`;
-
-  const banner=gid('apiBanner');
-  if(c.ready){
-    banner.className='api-banner all-ok';banner.classList.remove('hidden');
-    banner.innerHTML=`<span class="api-dot" style="background:var(--ok);"></span> 全部 API 就绪 — YouTube & Perspective 已连接`;
-  }else{
-    const missing=c.missing||[];
-    banner.className='api-banner warning';banner.classList.remove('hidden');
-    banner.innerHTML=`<span class="api-dot" style="background:var(--warn);"></span> <strong>部分 API 未配置：</strong>${missing.join(', ')||'无'} — 相应层级将以占位数据运行`;
+/* =========================================================
+   UTILITIES (Step 1)
+   ========================================================= */
+const Utils = {
+  formatNum(n) {
+    if (n == null) return '—';
+    if (n >= 1e6) return (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+    return String(n);
+  },
+  formatDate(dateStr) {
+    if (!dateStr) return '—';
+    const d = new Date(dateStr);
+    return d.toISOString().slice(0, 10);
+  },
+  riskClass(level) {
+    if (!level) return 'tag-info';
+    const map = { 'low-risk': 'tag-low', 'medium-risk': 'tag-medium', 'high-risk': 'tag-high' };
+    return map[level] || 'tag-info';
+  },
+  riskLabel(level) {
+    const map = { 'low-risk': '低风险', 'medium-risk': '中风险', 'high-risk': '高风险' };
+    return map[level] || level || '未知';
+  },
+  riskDot(level) {
+    const map = { 'low-risk': 'dot-ok', 'medium-risk': 'dot-warn', 'high-risk': 'dot-bad' };
+    return map[level] || 'dot-ok';
+  },
+  scoreCls(score) {
+    if (score == null) return 'tag-info';
+    if (score >= 70) return 'tag-low';
+    if (score >= 50) return 'tag-medium';
+    return 'tag-high';
+  },
+  verdictLabel(v) {
+    const map = { approve: '✅ 通过', review: '⚠️ 复核', reject: '🚫 拒绝' };
+    return map[v] || v || '—';
+  },
+  verdictCls(v) {
+    const map = { approve: 'tag-low', review: 'tag-medium', reject: 'tag-high' };
+    return map[v] || 'tag-info';
+  },
+  detectPlatform(url) {
+    if (!url) return null;
+    const u = url.toLowerCase();
+    if (u.includes('youtube.com') || u.includes('youtu.be')) return 'youtube';
+    if (u.includes('twitch.tv')) return 'twitch';
+    if (u.includes('twitter.com') || u.includes('x.com')) return 'twitter';
+    if (u.includes('tiktok.com')) return 'tiktok';
+    return null;
+  },
+  extractHandle(url) {
+    const m = url.match(/(?:youtube\.com\/@|youtube\.com\/channel\/|youtube\.com\/c\/|twitch\.tv\/)([^/?&#]+)/i);
+    return m ? m[1] : null;
+  },
+  truncate(str, len = 60) {
+    if (!str) return '';
+    return str.length > len ? str.slice(0, len) + '…' : str;
+  },
+  /** 生成唯一 ID */
+  uid() { return Math.random().toString(36).slice(2, 10); },
+  /** 延时 */
+  sleep(ms) { return new Promise(r => setTimeout(r, ms)); },
+  /** HTML 转义 */
+  escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  },
+  /** 平台名称格式化 */
+  formatPlatform(p) {
+    const map = { youtube: 'YouTube', twitch: 'Twitch', twitter: 'Twitter/X', tiktok: 'TikTok' };
+    return map[p] || p || '—';
   }
+};
+
+/* =========================================================
+   Toast 通知函数 — Step 8
+   ========================================================= */
+function showToast(message, type = 'info', duration = 3000) {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icons = { info: 'ℹ️', success: '✅', warn: '⚠️', error: '❌' };
+  el.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${message}</span>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 250);
+  }, duration);
 }
 
-// ==================== 改动2: 步骤追踪日志 ====================
-const TRACE_PHASES=[
-  {id:'L1',name:'数据真实性验证',icon:'📊'},
-  {id:'L2',name:'内容历史回溯',icon:'📝'},
-  {id:'L3',name:'政治敏感检测',icon:'🛡️'},
-  {id:'L4',name:'品牌安全评分',icon:'🏷️'},
-  {id:'L5',name:'竞争关系分析',icon:'🎮'},
-  {id:'L6',name:'影响力真实性',icon:'📈'},
-];
-
-function buildTraceSteps(){
-  return TRACE_PHASES.map(p=>`
-    <div class="trace-step pending" id="trace-${p.id}">
-      <div class="ts-dot">${p.icon}</div>
-      <span class="ts-label">${p.name}</span>
-    </div>`).join('');
-}
-
-function updateTraceStep(round){
-  const total=TRACE_PHASES.length;
-  const doneIdx=Math.min(Math.floor(round/10),total);
-  for(let i=0;i<total;i++){
-    const el=gid('trace-'+TRACE_PHASES[i].id);
-    if(!el)continue;
-    el.className='trace-step '+(i<doneIdx?'done':i===doneIdx?'active':'pending');
+/* =========================================================
+   键盘快捷键 — Step 8
+   ========================================================= */
+document.addEventListener('keydown', (e) => {
+  // Ctrl+Enter / Cmd+Enter → 开始筛查
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (!btnStart.disabled) btnStart.click();
   }
-}
+  // Escape → 取消筛查 或 关闭抽屉
+  if (e.key === 'Escape') {
+    const drawer = document.getElementById('layerDrawer');
+    if (drawer.classList.contains('open')) {
+      closeLayerDrawer();
+      return;
+    }
+    const cancelBtn = document.getElementById('btnCancel');
+    if (cancelBtn && cancelBtn.closest('#progressPanel') && cancelBtn.closest('#progressPanel').style.display !== 'none') {
+      cancelBtn.click();
+    }
+  }
+});
 
-// ==================== 渲染层卡片 ====================
-function renderLayer(layer,idx){
-  const icons={1:'📊',2:'📝',3:'🛡️',4:'🏷️',5:'🎮',6:'📈'};
-  const levelMap={low_risk:'low-risk',medium_risk:'medium-risk',high_risk:'high-risk'};
-  const details=(layer.details||[]).map(sec=>`<div style="margin-bottom:8px;"><div style="font-weight:600;margin-bottom:4px;color:var(--text);">${esc(sec.section)}</div><ul style="margin:0;padding-left:18px;">${(sec.items||[]).map(it=>`<li>${esc(it.label)}：<span class="${esc(it.cls||'')}">${esc(it.value)}</span></li>`).join('')}</ul></div>`).join('');
-  const signals=(layer.signals||[]).slice(0,5).map(s=>`<li>${esc(s.text||'')}</li>`).join('');
-  const risk=(layer.risk_keywords||[]).map(k=>`<span class="chip ${esc(k.type||'info')}">${esc(k.text||'')}</span>`).join('');
-  const lvl=(layer.level||'medium-risk').replace('-','_');
-  const cssLvl=levelMap[lvl]||'medium-risk';
-  const ln=layer.layer_number||idx;
-  const div=document.createElement('div');div.className=`layer ${cssLvl}`;
-  div.id=`layer-${ln}`;
-  div.innerHTML=`<div class="layer-hd"><span><span class="layer-icon">${icons[ln]||'📌'}</span> L${ln} · ${esc(layer.layer_name||'')}</span><span style="display:flex;align-items:center;gap:8px;">${fmtScore(layer.score)}<span class="badge ${cssLvl}">${esc(layer.level||'-')}</span><span class="layer-chevron">▼</span></span></div><div class="layer-bd">${details||'<div class="hint">暂无明细</div>'}${signals?`<div style="margin-top:6px;"><strong>关键风险信号：</strong><ul style="margin:4px 0 0;padding-left:18px;">${signals}</ul></div>`:''}${risk?`<div style="margin-top:8px;"><strong>风险关键词：</strong><div class="chip-wrap">${risk}</div></div>`:''}</div>`;
-  div.querySelector('.layer-hd').addEventListener('click',()=>div.classList.toggle('open'));
-  return div;
-}
+/* =========================================================
+   API 服务层 (Step 2)
+   ========================================================= */
+const API_BASE = '/api';
 
-// ==================== 改动5: 展开/折叠全部 ====================
-function setAllLayers(open){
-  allLayersExpanded=open;
-  document.querySelectorAll('.layer').forEach(l=>{if(open)l.classList.add('open');else l.classList.remove('open')});
-  gid('expandAllBtn').style.display=open?'none':'';
-  gid('collapseAllBtn').style.display=open?'':'none';
-}
+const ApiService = {
+  /** 健康检查 */
+  async health() {
+    const res = await fetch(`${API_BASE}/health`);
+    return res.json();
+  },
 
-gid('expandAllBtn').addEventListener('click',()=>setAllLayers(true));
-gid('collapseAllBtn').addEventListener('click',()=>setAllLayers(false));
+  /** 提交单条筛查任务 */
+  async submitScreen(url, dateFrom = '', dateTo = '') {
+    const body = { url, platform: 'youtube' };
+    if (dateFrom) body.date_from = dateFrom;
+    if (dateTo) body.date_to = dateTo;
+    const res = await fetch(`${API_BASE}/screen`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`提交失败: HTTP ${res.status}`);
+    return res.json();
+  },
 
-// ==================== 渲染结果 & 页面切换 ====================
-function renderResult(payload){
-  const {result,creator,layers}=payload;currentScreenId=result?.id||'';
+  /** 轮询筛查结果 */
+  async pollResult(screenId) {
+    const res = await fetch(`${API_BASE}/screen/${screenId}`);
+    if (!res.ok) throw new Error(`查询失败: HTTP ${res.status}`);
+    return res.json();
+  },
 
-  // 页面切换：隐藏搜索 & 进度, 显示结果
-  gid('searchView').classList.add('hidden');
-  gid('screeningCard').classList.add('hidden');
-  gid('batchResultPanel').classList.add('hidden');
-  gid('resultView').classList.remove('hidden');
+  /** 删除筛查记录 */
+  async deleteScreen(screenId) {
+    await fetch(`${API_BASE}/screen/${screenId}`, { method: 'DELETE' });
+  },
 
-  // 评分仪表盘
-  const score=result.composite_score??0;
-  gid('scoreVal').textContent=score;
-  const gauge=gid('gaugeArc');const peri=2*Math.PI*50;const dash=peri*score/100;
-  gauge.setAttribute('stroke-dasharray',`${dash} ${peri-dash}`);
-  gauge.setAttribute('stroke',score>=80?'var(--ok)':score>=40?'var(--warn)':'var(--bad)');
-  gid('scoreVal').style.color=score>=80?'var(--ok)':score>=40?'var(--warn)':'var(--bad)');
+  /** 获取历史记录 */
+  async history(params = {}) {
+    const q = new URLSearchParams(params).toString();
+    const res = await fetch(`${API_BASE}/history?${q}`);
+    return res.json();
+  },
 
-  // 判定横幅
-  const vb=gid('verdictBanner');const v=result.verdict;
-  vb.className='verdict-banner '+(v==='approve'?'approve':v==='reject'?'reject':'review');
-  vb.querySelector('div:last-child').textContent=v==='approve'?'✅ 建议合作':v==='reject'?'⛔ 建议拒绝':'🔍 需人工复核';
-  gid('verdictVal').textContent='';
+  /** 获取关键词库 */
+  async getKeywords(type) {
+    const res = await fetch(`${API_BASE}/keywords/${type}`);
+    if (!res.ok) throw new Error(`获取关键词失败: HTTP ${res.status}`);
+    return res.json();
+  },
 
-  // 创作者信息
-  gid('creatorVal').textContent=creator.name||creator.handle||creator.url||'-';
-  gid('platformVal').textContent=creator.platform||'-';
-  gid('subsVal').textContent=creator.subs?Number(creator.subs).toLocaleString():'-';
-  gid('countryVal').textContent=creator.country||'-';
+  /** 更新关键词库 */
+  async updateKeywords(type, data) {
+    const res = await fetch(`${API_BASE}/keywords/${type}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error(`保存关键词失败: HTTP ${res.status}`);
+    return res.json();
+  },
 
-  // 一票否决
-  const veto=gid('vetoBlock');
-  if(result.veto_flags&&result.veto_flags.length){
-    veto.classList.remove('hidden');
-    veto.innerHTML=`<strong>⚠️ 一票否决信号：</strong> ${result.veto_flags.map(v=>esc(v.text||v)).join('；')}`;
-  }else{veto.classList.add('hidden')}
+  /** 导出单条 Excel — 用 window.open 触发直接下载 */
+  exportSingle(screenId) {
+    window.open(`${API_BASE}/export/screen/${screenId}`, '_blank');
+  },
 
-  // 渲染层卡片
-  const layersBox=gid('layersBox');layersBox.innerHTML='';
-  const iconMap={1:'📊',2:'📝',3:'🛡️',4:'🏷️',5:'🎮',6:'📈'};
-  (layers||[]).forEach((l,i)=>{
-    const card=renderLayer(l,i+1);
-    layersBox.appendChild(card);
+  /** 批量导出 Excel — POST 多条 id，下载 blob */
+  async exportBatch(screenIds) {
+    const res = await fetch(`${API_BASE}/export/batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(screenIds),
+    });
+    if (!res.ok) throw new Error(`批量导出失败: HTTP ${res.status}`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `批量背调报告_${screenIds.length}人.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+};
+
+/* =========================================================
+   TAB 切换
+   ========================================================= */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', async () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    const id = 'section' + tab.dataset.tab.charAt(0).toUpperCase() + tab.dataset.tab.slice(1);
+    document.getElementById(id).classList.add('active');
+
+    // 切换到关键词库时从后端加载
+    if (tab.dataset.tab === 'keywords') {
+      await loadKeywordsFromBackend();
+      renderKeywords();
+    }
+
+    // 切换到历史记录时从后端加载
+    if (tab.dataset.tab === 'history') {
+      loadHistory(1);
+    }
   });
+});
 
-  // 默认全部折叠
-  setAllLayers(false);
-  // 滚动到顶部
-  gid('resultView').scrollIntoView({behavior:'smooth'});
-}
+/* =========================================================
+   URL 输入解析
+   ========================================================= */
+const urlInput = document.getElementById('urlInput');
+const urlHint = document.getElementById('urlHint');
+const btnStart = document.getElementById('btnStart');
+const btnClear = document.getElementById('btnClear');
 
-// ==================== 返回搜索 ====================
-function backToSearch(){
-  gid('searchView').classList.remove('hidden');
-  gid('screeningCard').classList.add('hidden');
-  gid('resultView').classList.add('hidden');
-  gid('batchResultPanel').classList.add('hidden');
-  gid('urlInput').focus();
-}
-gid('backToSearch').addEventListener('click',backToSearch);
-gid('backToSearch2').addEventListener('click',backToSearch);
-
-// ==================== 筛查主流程 ====================
-// 从 textarea 提取非空行
-function getUrlLines(){
-  return gid('urlInput').value.split('\n').map(s=>s.trim()).filter(s=>s.length>0);
-}
-
-async function pollResult(screenId){
-  gid('screeningCard').classList.remove('hidden');
-  gid('batchResultPanel').classList.add('hidden');
-  gid('resultView').classList.add('hidden');
-  gid('screeningTitle').textContent='正在进行六层AI筛查';
-  const stepsEl=gid('traceSteps');
-  stepsEl.innerHTML=buildTraceSteps();
-
-  for(let i=0;i<60;i++){
-    const data=await fetch(`/api/screen/${screenId}`).then(r=>r.json());
-
-    if(data.result?.status==='completed'){
-      gid('screeningSub').textContent='✅ 六层筛查全部完成';
-      updateTraceStep(60);
-      await new Promise(r=>setTimeout(r,500));
-      renderResult(data);
-      return;
+function parseUrls() {
+  const raw = urlInput.value.trim();
+  if (!raw) return [];
+  const lines = raw.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+  const valid = [];
+  const seen = new Set();
+  for (const line of lines) {
+    const platform = Utils.detectPlatform(line);
+    if (platform && !seen.has(line)) {
+      valid.push({ url: line, platform });
+      seen.add(line);
     }
-    if(data.result?.status==='failed'){
-      gid('screeningSub').textContent='筛查失败';
-      return;
-    }
-
-    updateTraceStep(i);
-    const phaseMsgs=[
-      '正在获取频道基础数据...',
-      '正在下载字幕并进行关键词扫描...',
-      '正在运行政治敏感信号检测...',
-      '正在计算品牌安全得分...',
-      '正在分析竞品关联度...',
-      '正在验证影响力真实性...',
-    ];
-    const msgIdx=Math.min(Math.floor(i/10),5);
-    gid('screeningSub').textContent=phaseMsgs[msgIdx]||'处理中...';
-    await new Promise(r=>setTimeout(r,1200));
   }
-  gid('screeningSub').textContent='轮询超时，请稍后查看历史记录。';
+  return valid;
 }
 
-async function runBatch(urls){
-  // 生成 CSV Blob 并上传
-  const csv='url\n'+urls.join('\n');
-  const blob=new Blob([csv],{type:'text/csv'});
-  const fd=new FormData();fd.append('file',blob,'batch.csv');
+function updateUrlUI() {
+  const urls = parseUrls();
+  const total = urls.length;
+  const yt = urls.filter(u => u.platform === 'youtube').length;
+  const other = total - yt;
+  let parts = [`共 ${total} 个链接`];
+  if (yt) parts.push(`YouTube ${yt} 个`);
+  if (other) parts.push(`其他 ${other} 个`);
+  urlHint.textContent = '💡 ' + parts.join(' · ');
+  btnStart.disabled = total === 0;
+  btnStart.textContent = total > 1 ? `🚀 开始筛查 · ${total} 人` : '🚀 开始筛查';
+}
 
-  gid('searchView').classList.add('hidden');
-  gid('resultView').classList.add('hidden');
-  gid('screeningCard').classList.remove('hidden');
-  gid('screeningTitle').textContent=`批量筛查 ${urls.length} 位创作者`;
-  gid('screeningSub').textContent='正在提交批量任务...';
-  gid('traceSteps').innerHTML='';
+urlInput.addEventListener('input', updateUrlUI);
+btnClear.addEventListener('click', () => {
+  urlInput.value = '';
+  updateUrlUI();
+});
 
-  const res=await fetch('/api/batch',{method:'POST',body:fd});
-  const data=await res.json();
-  if(!res.ok||!data.batch_id){
-    gid('screeningSub').textContent='批量任务创建失败：'+(data.error||data.detail||'未知错误');
+// 初始状态
+updateUrlUI();
+
+/* ── 日期区间验证（最大 6 个月）── */
+const dateFromInput = document.getElementById('dateFrom');
+const dateToInput = document.getElementById('dateTo');
+
+dateFromInput.addEventListener('change', () => {
+  const fromVal = dateFromInput.value;
+  if (fromVal) {
+    const from = new Date(fromVal);
+    const maxTo = new Date(from);
+    maxTo.setMonth(maxTo.getMonth() + 6);
+    dateToInput.min = fromVal;
+    dateToInput.max = maxTo.toISOString().slice(0, 10);
+    // 如果当前 end 超出范围，自动修正
+    if (dateToInput.value && dateToInput.value > dateToInput.max) {
+      dateToInput.value = dateToInput.max;
+      showToast(`截止日期已自动调整为 ${dateToInput.max}（最长 6 个月区间）`, 'info', 2500);
+    }
+  } else {
+    dateToInput.min = '';
+    dateToInput.max = '';
+  }
+});
+
+dateToInput.addEventListener('change', () => {
+  const fromVal = dateFromInput.value;
+  const toVal = dateToInput.value;
+  if (fromVal && toVal) {
+    const from = new Date(fromVal);
+    const to = new Date(toVal);
+    const diffMonths = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
+    if (diffMonths > 6) {
+      showToast('区间超过 6 个月，已自动截断', 'warn', 3000);
+      const maxTo = new Date(from);
+      maxTo.setMonth(maxTo.getMonth() + 6);
+      dateToInput.value = maxTo.toISOString().slice(0, 10);
+    }
+  }
+});
+
+/* =========================================================
+   筛查进度控制器 (Step 2)
+   ========================================================= */
+const ProgressUI = {
+  /** 显示进度面板 */
+  show() {
+    document.getElementById('progressPanel').style.display = 'block';
+    document.getElementById('emptyState').style.display = 'none';
+    // 紧凑搜索区
+    document.getElementById('searchPanel').classList.add('search-panel-compact');
+  },
+
+  /** 隐藏进度面板 */
+  hide() {
+    document.getElementById('progressPanel').style.display = 'none';
+    document.getElementById('emptyState').style.display = 'block';
+    document.getElementById('searchPanel').classList.remove('search-panel-compact');
+  },
+
+  /** 重置所有步骤到等待状态 */
+  resetSteps() {
+    document.querySelectorAll('.step-row').forEach(row => {
+      row.className = 'step-row pending';
+      row.querySelector('.step-icon').textContent = '⬜';
+      row.querySelector('.step-status').textContent = '等待';
+    });
+    document.getElementById('progressFill').style.width = '0%';
+    document.getElementById('logStream').innerHTML = '';
+    document.getElementById('progressTitle').textContent = '正在执行筛查';
+  },
+
+  /** 更新指定步骤为活跃 */
+  setActive(stepNum, statusText) {
+    const row = document.querySelector(`.step-row[data-step="${stepNum}"]`);
+    if (!row) return;
+    row.className = 'step-row active';
+    row.querySelector('.step-icon').textContent = '⏳';
+    row.querySelector('.step-status').textContent = statusText || '进行中...';
+  },
+
+  /** 标记步骤完成 */
+  setDone(stepNum) {
+    const row = document.querySelector(`.step-row[data-step="${stepNum}"]`);
+    if (!row) return;
+    row.className = 'step-row done';
+    row.querySelector('.step-icon').textContent = '✅';
+    row.querySelector('.step-status').textContent = '已完成';
+  },
+
+  /** 标记步骤失败 */
+  setError(stepNum) {
+    const row = document.querySelector(`.step-row[data-step="${stepNum}"]`);
+    if (!row) return;
+    row.className = 'step-row done';
+    row.querySelector('.step-icon').textContent = '❌';
+    row.querySelector('.step-status').textContent = '失败';
+  },
+
+  /** 更新进度条百分比 */
+  setProgress(pct) {
+    document.getElementById('progressFill').style.width = Math.min(pct, 100) + '%';
+  },
+
+  /** 追加日志 */
+  addLog(text, type = 'done') {
+    const stream = document.getElementById('logStream');
+    const line = document.createElement('div');
+    line.className = `log-line ${type}`;
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${text}`;
+    stream.appendChild(line);
+    stream.scrollTop = stream.scrollHeight;
+  },
+
+  /** 设置批量模式统计 */
+  setBatchStats(done, running, failed) {
+    document.getElementById('batchStats').style.display = 'grid';
+    document.getElementById('batchDone').textContent = done;
+    document.getElementById('batchRunning').textContent = running;
+    document.getElementById('batchFailed').textContent = failed;
+  },
+
+  /** 设置标题（单/批量） */
+  setTitle(text) {
+    document.getElementById('progressTitle').textContent = text;
+  },
+
+  /** 检查是否已取消 */
+  cancelled: false,
+  cancel() { this.cancelled = true; },
+  resetCancel() { this.cancelled = false; }
+};
+
+/* =========================================================
+    结果渲染 — 创作者卡片 + 六层详情 (Step 3 & 4)
+    ========================================================= */
+
+ /** 渲染综合评分仪表盘 + 判定结论 (Step 5) */
+ function renderSummaryPanel(result) {
+   const score = result.composite_score;
+   const verdict = result.verdict;
+   const vetoes = result.veto_flags || [];
+
+   // 评分颜色
+   const scoreColor = score >= 70 ? 'ok' : (score >= 50 ? 'warn' : 'bad');
+   const ring = document.getElementById('ringFill');
+   const circumference = 326.73;
+   const offset = circumference * (1 - Math.min(score, 100) / 100);
+   ring.setAttribute('stroke-dashoffset', offset);
+   ring.className = 'ring-fill ' + scoreColor;
+
+   // 数字
+   const scoreEl = document.getElementById('scoreNum');
+   scoreEl.textContent = score != null ? score : '—';
+   scoreEl.className = 'score-num ' + scoreColor;
+
+   // 判定
+   const badge = document.getElementById('verdictBadge');
+   badge.textContent = Utils.verdictLabel(verdict);
+   badge.className = 'verdict-badge ' + (verdict || '');
+
+   // 时间
+   const timeEl = document.getElementById('verdictTime');
+   if (result.completed_at) {
+     timeEl.textContent = '完成于 ' + new Date(result.completed_at).toLocaleString();
+   } else {
+     timeEl.textContent = '';
+   }
+
+   // 一票否决
+   const vetoList = document.getElementById('vetoList');
+   vetoList.innerHTML = '';
+   if (vetoes.length > 0) {
+     for (const v of vetoes) {
+       const div = document.createElement('div');
+       div.className = 'veto-item';
+       div.innerHTML = `<span>${v.icon || '🚫'}</span><span>${Utils.escapeHtml(v.text || '')}</span>`;
+       vetoList.appendChild(div);
+     }
+   }
+ }
+
+ /** 六层速览分数行 */
+  function renderLayerMiniRow(layers) {
+    const container = document.getElementById('layerMiniRow');
+    if (!layers || layers.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+    const names = {
+      1: 'L1 真实性',
+      2: 'L2 回溯',
+      3: 'L3 政治',
+      4: 'L4 品牌',
+      5: 'L5 竞争',
+      6: 'L6 影响力'
+    };
+    const sorted = [...layers].sort((a, b) => a.layer_number - b.layer_number);
+    container.innerHTML = sorted.map(l => {
+      const dotCls = Utils.riskDot(l.level);
+      const scoreColor = l.score >= 70 ? 'var(--ok)' : (l.score >= 50 ? 'var(--warn)' : 'var(--bad)');
+      return `
+        <div class="layer-mini">
+          <div class="mini-num">${names[l.layer_number] || l.layer_name}</div>
+          <div class="mini-score" style="color:${scoreColor}">${l.score != null ? l.score : '—'}</div>
+          <div class="mini-dot ${dotCls}"></div>
+        </div>`;
+    }).join('');
+  }
+
+  /** 渲染创作者信息卡片 */
+ function renderCreatorCard(creator) {
+   if (!creator || !creator.name) {
+     document.getElementById('creatorCard').innerHTML = '<span class="text-muted">创作者信息获取失败</span>';
+     return;
+   }
+   const avatarHtml = creator.avatar_url
+     ? `<img src="${creator.avatar_url}" alt="${creator.name}">`
+     : '🎮';
+   const countryFlag = creator.country
+     ? `<span class="creator-stat">🌍 <strong>${creator.country}</strong></span>`
+     : '';
+   const categoryTag = creator.category
+     ? `<span class="tag tag-info">${creator.category}</span>`
+     : '';
+
+   document.getElementById('creatorCard').innerHTML = `
+     <div class="creator-avatar">${avatarHtml}</div>
+     <div class="creator-meta">
+       <div class="creator-name">${Utils.escapeHtml(creator.name)}</div>
+       <div class="creator-handle">@${Utils.escapeHtml(creator.handle || '')}</div>
+       <div class="creator-stats">
+         <span class="creator-stat">📺 <strong>${Utils.formatPlatform(creator.platform)}</strong></span>
+         <span class="creator-stat">👥 <strong>${Utils.formatNum(creator.subs)}</strong> 订阅</span>
+         <span class="creator-stat">🗣️ <strong>${creator.content_lang || '—'}</strong></span>
+         ${countryFlag}
+       </div>
+     </div>
+     <div class="creator-tags">
+       ${categoryTag}
+     </div>
+   `;
+ }
+
+ /** 渲染单层详情卡片（仅显示表头，点击弹出抽屉） */
+ function renderLayerCard(layer, index) {
+   const num = layer.layer_number;
+   const name = layer.layer_name;
+   const score = layer.score;
+   const level = layer.level || 'low-risk';
+   const cls = Utils.riskClass(level);
+   const label = Utils.riskLabel(level);
+   const dotCls = Utils.riskDot(level);
+   const isHighRisk = level === 'high-risk' || level === 'medium-risk';
+
+   // 确保风险关键词也体现在信号中
+   const mergedSignals = _ensureSignalsFromKeywords(layer);
+
+   const signalCount = (mergedSignals || []).length;
+   const keywordCount = (layer.risk_keywords || []).length;
+   const badgeInfo = [];
+   if (signalCount) badgeInfo.push(`${signalCount} 条信号`);
+   if (keywordCount) badgeInfo.push(`${keywordCount} 个关键词`);
+
+   return `
+     <div class="layer-card" data-layer="${num}" data-idx="${index}">
+       <div class="layer-header" onclick="openLayerDrawer(this)">
+         <span class="layer-dot dot ${dotCls}"></span>
+         <span class="layer-name">L${num} · ${name}</span>
+         <span class="layer-hint">${badgeInfo.length ? badgeInfo.join(' · ') : '无风险'}</span>
+         <span class="layer-score" style="color:${isHighRisk ? 'var(--bad)' : (level === 'low-risk' ? 'var(--ok)' : 'var(--warn)')}">${score != null ? score : '—'}</span>
+         <span class="tag ${cls}" style="margin-right:6px;">${label}</span>
+         <span class="layer-arrow">▶</span>
+       </div>
+     </div>`;
+ }
+
+ /** 确保风险关键词体现在信号中 */
+ function _ensureSignalsFromKeywords(layer) {
+   const signals = (layer.signals || []).slice();
+   const keywords = layer.risk_keywords || [];
+   if (keywords.length > 0 && signals.length === 0) {
+     // 只有关键词没有信号时，自动生成信号
+     for (const kw of keywords) {
+       signals.push({
+         icon: kw.type === 'critical' ? '🔴' : (kw.type === 'warning' ? '🟡' : '⚪'),
+         date: '',
+         text: `检出关键词: ${kw.text}`,
+         keywords: [kw.text],
+       });
+     }
+   }
+   return signals;
+ }
+
+ /** 打开层详情滑动抽屉 */
+ function openLayerDrawer(headerEl) {
+   const card = headerEl.closest('.layer-card');
+   const idx = parseInt(card.dataset.idx);
+   const layers = _currentResultLayers;
+   if (!layers || idx == null || !layers[idx]) return;
+
+   const layer = layers[idx];
+   const num = layer.layer_number;
+   const name = layer.layer_name;
+   const score = layer.score;
+   const level = layer.level || 'low-risk';
+   const dotCls = Utils.riskDot(level);
+   const cls = Utils.riskClass(level);
+   const label = Utils.riskLabel(level);
+   const isHighRisk = level === 'high-risk' || level === 'medium-risk';
+   const scoreColor = isHighRisk ? 'var(--bad)' : (level === 'low-risk' ? 'var(--ok)' : 'var(--warn)');
+
+   // 填充抽屉头部
+   document.getElementById('ddDot').className = 'dd-dot ' + dotCls;
+   document.getElementById('ddName').textContent = `L${num} · ${name}`;
+   document.getElementById('ddScore').textContent = score != null ? score : '—';
+   document.getElementById('ddScore').style.color = scoreColor;
+   const tagEl = document.getElementById('ddTag');
+   tagEl.textContent = label;
+   tagEl.className = 'tag ' + cls;
+
+   // 确保关键词体现在信号中
+   const mergedSignals = _ensureSignalsFromKeywords(layer);
+   const layerWithSignals = { ...layer, signals: mergedSignals };
+
+   // 渲染抽屉正文
+   document.getElementById('ddBody').innerHTML = buildDrawerContent(layerWithSignals);
+
+   // 打开抽屉
+   document.getElementById('layerDrawer').classList.add('open');
+   document.getElementById('layerDrawerBackdrop').classList.add('open');
+   document.body.style.overflow = 'hidden';
+ }
+
+ /** 构建抽屉正文 HTML */
+ function buildDrawerContent(layer) {
+   let html = '';
+
+   // 子项明细
+   if (layer.details && layer.details.length > 0) {
+     for (const section of layer.details) {
+       html += `<div class="section-title">${Utils.escapeHtml(section.section)}</div>`;
+       html += '<div class="sub-items">';
+       for (const item of section.items) {
+         const valCls = item.cls || '';
+         html += `
+           <div class="sub-item">
+             <span class="lbl">${Utils.escapeHtml(item.label)}</span>
+             <span class="val ${valCls}">${item.value}</span>
+           </div>`;
+       }
+       html += '</div>';
+     }
+   }
+
+   // 风险信号
+   if (layer.signals && layer.signals.length > 0) {
+     html += '<div class="section-title">🚨 风险信号</div>';
+     html += '<div class="signal-list">';
+     for (const sig of layer.signals) {
+       const date = sig.date ? `<span class="signal-date">${sig.date}</span>` : '';
+       const evidenceUrl = sig.evidence_url || extractEvidenceUrl(sig);
+       const evidenceHtml = evidenceUrl
+         ? `<div class="signal-evidence">📎 <a href="${evidenceUrl}" target="_blank" rel="noopener">${Utils.truncate(evidenceUrl, 100)}</a></div>`
+         : '';
+       const kwsHtml = sig.keywords && sig.keywords.length > 0
+         ? `<div class="signal-kws">${sig.keywords.map(k => `<span class="kw-tag warning">${Utils.escapeHtml(k)}</span>`).join('')}</div>`
+         : '';
+       html += `
+         <div class="signal-item">
+           <div class="signal-header">
+             <span>${sig.icon || '🟡'}</span>
+             ${date}
+           </div>
+           <div class="signal-text">${Utils.escapeHtml(sig.text || '')}</div>
+           ${evidenceHtml}
+           ${kwsHtml}
+         </div>`;
+     }
+     html += '</div>';
+   }
+
+   // 风险关键词标签
+   if (layer.risk_keywords && layer.risk_keywords.length > 0) {
+     html += '<div class="section-title">🏷️ 风险关键词</div>';
+     html += '<div class="kw-cloud">';
+     for (const kw of layer.risk_keywords) {
+       const kwCls = kw.type === 'critical' ? 'critical' : (kw.type === 'warning' ? 'warning' : 'info');
+       html += `<span class="kw-tag ${kwCls}">${Utils.escapeHtml(kw.text)}</span>`;
+     }
+     html += '</div>';
+   }
+
+   if (!html) {
+     html = '<div class="text-muted text-sm" style="padding:12px 0;">该层暂无详细数据</div>';
+   }
+
+   return html;
+ }
+
+ /** 关闭层详情滑动抽屉 */
+ function closeLayerDrawer() {
+   document.getElementById('layerDrawer').classList.remove('open');
+   document.getElementById('layerDrawerBackdrop').classList.remove('open');
+   document.body.style.overflow = '';
+ }
+
+ /** 从 signal.text 中尝试提取证据 URL */
+ function extractEvidenceUrl(sig) {
+   if (!sig || !sig.text) return '';
+   // 匹配常见 URL 模式
+   const m = sig.text.match(/(https?:\/\/[^\s]+)/);
+   return m ? m[1] : '';
+ }
+
+ /** 存储当前结果层数据（供抽屉引用） */
+let _currentResultLayers = [];
+
+/** 当前查看的单条筛查 ID（供导出使用） */
+let _currentScreenId = '';
+
+/** 批量结果中各条 ID（供批量导出使用） */
+let _batchExportIds = [];
+
+/** 渲染全部六层 */
+function renderAllLayers(layers) {
+  const container = document.getElementById('layersContainer');
+  _currentResultLayers = layers || [];
+  if (!layers || layers.length === 0) {
+    container.innerHTML = '<div class="panel text-muted text-sm">暂无层数据</div>';
     return;
   }
-  await pollBatchProgress(data.batch_id,urls.length);
+  // 按 layer_number 排序
+  const sorted = [...layers].sort((a, b) => a.layer_number - b.layer_number);
+  container.innerHTML = sorted.map((l, i) => renderLayerCard(l, i)).join('');
 }
 
-async function pollBatchProgress(batchId,total){
-  currentBatchId=batchId;
-  gid('screeningSub').textContent=`批次 ${batchId} · 共 ${total} 条 · 轮询中...`;
+ /** 展示完整结果视图 */
+ function showResultView(data) {
+   document.getElementById('resultView').style.display = 'block';
+   _currentScreenId = (data.result && data.result.id) || '';
+   renderSummaryPanel(data.result);
+   renderLayerMiniRow(data.layers);
+   renderCreatorCard(data.creator);
+   renderAllLayers(data.layers);
+   // 滚动到结果区
+   document.getElementById('resultView').scrollIntoView({ behavior: 'smooth', block: 'start' });
+ }
 
-  for(let i=0;i<80;i++){
-    const p=await fetch(`/api/batch/${batchId}`).then(r=>r.json());
-    const done=(p.completed_count||0)+(p.failed_count||0);
-    const pct=p.total_count?Math.round(done*100/p.total_count):0;
-    gid('screeningSub').textContent=`批次 ${batchId} · ${done}/${p.total_count||total} 已完成 · ${pct}%`;
-    if(p.status==='completed'||p.status==='failed'||done>=(p.total_count||total)){
-      gid('screeningCard').classList.add('hidden');
-      gid('batchResultPanel').classList.remove('hidden');
-      gid('batchStatusInline').textContent=`✅ 批次完成 · 成功 ${p.completed_count||0} · 失败 ${p.failed_count||0}`;
-      gid('batchStatusInline').className='status ok';
-      await loadBatchTable(batchId);
+ /** 隐藏结果视图 */
+ function hideResultView() {
+   document.getElementById('resultView').style.display = 'none';
+ }
+
+/** 存储批量筛查结果数据（用于查看详情） */
+let _batchResultsData = [];
+
+/* =========================================================
+   批量结果渲染 (Step 6)
+   ========================================================= */
+
+/** 获取 Top 风险点 */
+function getTopRisk(layers) {
+  if (!layers || layers.length === 0) return '—';
+  const worst = [...layers].sort((a, b) => (a.score || 100) - (b.score || 100))[0];
+  return `${worst.layer_name} ${worst.score != null ? worst.score : '—'}/100`;
+}
+
+/** 渲染批量结果汇总表 */
+function renderBatchResults(results) {
+  _batchResultsData = results;
+  _batchExportIds = results.map(r => r.result?.id || r.id || '').filter(Boolean);
+  document.getElementById('batchView').style.display = 'block';
+  document.getElementById('resultView').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'none';
+  ProgressUI.hide();
+
+  const total = results.length;
+  const counts = { approve: 0, review: 0, reject: 0 };
+  for (const r of results) {
+    const v = r.result.verdict;
+    if (counts[v] != null) counts[v]++;
+  }
+
+  // 统计行
+  const countsEl = document.getElementById('batchCounts');
+  countsEl.innerHTML = `
+    <div class="batch-count approve"><span class="num">${counts.approve}</span> ✅ 通过</div>
+    <div class="batch-count review"><span class="num">${counts.review}</span> ⚠️ 复核</div>
+    <div class="batch-count reject"><span class="num">${counts.reject}</span> 🚫 拒绝</div>
+  `;
+
+  // 标题
+  document.getElementById('batchViewTitle').textContent = `批量筛查结果 · 共 ${total} 人`;
+
+  // 表格行
+  const tbody = document.getElementById('batchTableBody');
+  tbody.innerHTML = results.map((r, idx) => {
+    const creator = r.creator || {};
+    const res = r.result || {};
+    const score = res.composite_score;
+    const verdict = res.verdict || 'review';
+    const scoreColor = score >= 70 ? 'var(--ok)' : (score >= 50 ? 'var(--warn)' : 'var(--bad)');
+    const topRisk = getTopRisk(r.layers);
+    const avatarHtml = creator.avatar_url
+      ? `<img src="${creator.avatar_url}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;">`
+      : '🎮';
+    return `
+      <tr>
+        <td>
+          <div class="col-name">
+            <span class="avatar-mini">${avatarHtml}</span>
+            <span>${Utils.escapeHtml(creator.name || '—')}</span>
+          </div>
+        </td>
+        <td><span class="text-muted">${Utils.formatPlatform(creator.platform)}</span></td>
+        <td style="text-align:center;">
+          <span class="col-score" style="color:${scoreColor}">${score != null ? score : '—'}</span>
+        </td>
+        <td><span class="tag ${Utils.verdictCls(verdict)}">${Utils.verdictLabel(verdict)}</span></td>
+        <td><span class="col-risk">${Utils.truncate(topRisk, 30)}</span></td>
+        <td style="text-align:center;">
+          <button class="btn-sm" onclick="showBatchDetail(${idx})">查看详情</button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  // 底部摘要
+  document.getElementById('batchSummary').textContent = `📊 共筛查 ${total} 人 · 通过 ${counts.approve} 人 · 需复核 ${counts.review} 人 · 已拒绝 ${counts.reject} 人`;
+}
+
+/** 查看批量中某个创作者的详情 */
+function showBatchDetail(idx) {
+  const data = _batchResultsData[idx];
+  if (!data) return;
+  document.getElementById('batchView').style.display = 'none';
+  showResultView(data);
+  // 添加一个"返回批量"按钮
+  const actions = document.querySelector('.summary-actions');
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn btn-ghost';
+  backBtn.style.cssText = 'font-size:13px;';
+  backBtn.innerHTML = '← 返回批量';
+  backBtn.onclick = () => {
+    document.getElementById('resultView').style.display = 'none';
+    renderBatchResults(_batchResultsData);
+  };
+  actions.insertBefore(backBtn, actions.firstChild);
+}
+
+/* =========================================================
+   筛查流程调度 (Step 2)
+   ========================================================= */
+const ScreenController = {
+  /** 正在执行的 taskId 列表 */
+  activeTasks: [],
+
+  /** 执行单条筛查 */
+  async runSingle(url) {
+    hideResultView();
+    ProgressUI.resetSteps();
+    ProgressUI.show();
+    ProgressUI.setTitle('正在执行筛查');
+    ProgressUI.addLog('提交筛查任务...', 'active');
+
+    let screenId;
+
+    try {
+      // 获取日期区间（转为 YYYYMMDD 格式）
+      const dateFromRaw = document.getElementById('dateFrom').value;
+      const dateToRaw = document.getElementById('dateTo').value;
+      const dateFrom = dateFromRaw ? dateFromRaw.replace(/-/g, '') : '';
+      const dateTo = dateToRaw ? dateToRaw.replace(/-/g, '') : '';
+      const dateInfo = [];
+      if (dateFrom) dateInfo.push(`起始 ${dateFromRaw}`);
+      if (dateTo) dateInfo.push(`截止 ${dateToRaw}`);
+      if (dateInfo.length) ProgressUI.addLog(`📅 视频回溯区间: ${dateInfo.join(' ~ ')}`);
+
+      // 提交任务
+      const submitRes = await ApiService.submitScreen(url, dateFrom, dateTo);
+      screenId = submitRes.screen_id;
+      ProgressUI.addLog(`任务已提交 (ID: ${screenId.slice(0, 8)}…)`);
+    } catch (e) {
+      ProgressUI.addLog(`提交失败: ${e.message}`, 'error');
       return;
     }
-    await new Promise(r=>setTimeout(r,1500));
-  }
-  gid('screeningCard').classList.add('hidden');
-  gid('batchResultPanel').classList.remove('hidden');
-  gid('batchStatusInline').textContent='⚠️ 轮询超时，部分任务可能仍在运行。';
-  gid('batchStatusInline').className='status warn';
-  await loadBatchTable(batchId);
-}
 
-async function loadBatchTable(batchId){
-  const data=await fetch(`/api/batch/${batchId}/results`).then(r=>r.json());
-  const tbody=gid('batchTbody');tbody.innerHTML='';
-  (data.items||[]).forEach(item=>{
-    const creator=item.name||item.handle||'Unknown';
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${esc(item.created_at||'')}</td><td>${esc(creator)}</td><td>${esc(item.platform||'')}</td><td>${esc(item.status||'')}</td><td>${fmtScore(item.composite_score)}</td><td>${esc(verdictText(item.verdict))}</td><td><button class="secondary" data-id="${esc(item.screen_id)}">查看</button></td>`;
-    tr.querySelector('button').addEventListener('click',async(e)=>{
-      const detail=await fetch(`/api/screen/${e.target.dataset.id}`).then(x=>x.json());
-      backToSearch();
-      // 走单条流程展示
-      gid('searchView').classList.add('hidden');
-      gid('batchResultPanel').classList.add('hidden');
-      renderResult(detail);
+    // SSE 实时进度监听
+    ProgressUI.addLog('正在接入实时进度...', 'active');
+    let lastStep = -1;
+    let sseDone = false;
+
+    const evtSource = new EventSource(`${API_BASE}/screen/${screenId}/progress`);
+
+    const cleanupSSE = () => { try { evtSource.close(); } catch (_) {} };
+
+    evtSource.onmessage = (event) => {
+      try {
+        const prog = JSON.parse(event.data);
+        if (!prog) return;
+
+        const step = prog.current_step;
+        const stepName = prog.step_name || '';
+        const detail = prog.detail || '';
+
+        // 更新步骤进度
+        if (step != null && step !== lastStep) {
+          if (step === 0) {
+            ProgressUI.setActive(0, '等待调度');
+            ProgressUI.setProgress(0);
+          }
+          lastStep = step;
+        }
+
+        const stepLabels = [
+          'L1 真实性验证', 'L2 内容回溯', 'L3 政治检测',
+          'L4 品牌安全', 'L5 竞争分析', 'L6 影响力',
+        ];
+
+        if (step >= 1 && step <= 6) {
+          const idx = step - 1;
+          const label = stepLabels[idx] || stepName;
+          for (let i = 0; i < idx; i++) {
+            ProgressUI.setDone(i, stepLabels[i], '✓ 完成');
+          }
+          ProgressUI.setActive(idx, label, false);
+          ProgressUI.addLog(`${label}: ${detail}`);
+        } else if (step === 7) {
+          for (let i = 0; i < 6; i++) {
+            ProgressUI.setDone(i, stepLabels[i], '✓ 完成');
+          }
+          ProgressUI.setActive(6, '综合评分');
+          ProgressUI.addLog(`综合评分: ${detail}`);
+        }
+
+        const pct = step >= 0 ? Math.min(100, Math.round(step / 8 * 100)) : 0;
+        ProgressUI.setProgress(pct);
+
+        // 完成
+         if (prog.status === 'completed') {
+           sseDone = true;
+           cleanupSSE();
+           ProgressUI.addLog(`✅ 筛查完成: ${detail}`);
+           ProgressUI.setProgress(100);
+           this._fetchAndShowResult(screenId);
+         } else if (prog.status === 'failed') {
+           sseDone = true;
+           cleanupSSE();
+           ProgressUI.addLog(`❌ 筛查失败: ${detail}`, 'error');
+           ProgressUI.setActive(10, '失败', true);
+         }
+       } catch (_) {}
+     };
+ 
+     evtSource.onerror = () => {
+       cleanupSSE();
+       if (sseDone) return;
+       ProgressUI.addLog('实时连接断开，切换到轮询模式...', 'warn');
+       this._pollFallback(screenId);
+     };
+ 
+     // 超时保护 (5分钟)
+     setTimeout(() => {
+       if (sseDone) return;
+       try { evtSource.close(); } catch (_) {}
+       this._pollFallback(screenId);
+     }, 5 * 60 * 1000);
+   },
+
+  /** SSE 断开后的轮询回退 */
+  async _pollFallback(screenId) {
+    if (this._ssePolled) return;
+    this._ssePolled = true;
+    for (let i = 0; i < 60; i++) {
+      if (ProgressUI.cancelled) return;
+      await Utils.sleep(3000);
+      try {
+        const data = await ApiService.pollResult(screenId);
+        if (!data || !data.result) continue;
+        if (data.result.status === 'completed') {
+          ProgressUI.addLog('✅ 筛查完成 (轮询)');
+          showResultView(data);
+          ProgressUI.hide();
+          return;
+        }
+        if (data.result.status === 'failed') {
+          ProgressUI.addLog(`❌ 筛查失败: ${data.result.error_message || '未知'}`, 'error');
+          ProgressUI.setActive(10, '失败', true);
+          return;
+        }
+        // 层进度
+        if (data.layers && data.layers.length > 0) {
+          const done = data.layers.filter(l => l.score != null).length;
+          ProgressUI.addLog(`轮询进度: ${done}/6 层完成`);
+          ProgressUI.setProgress(Math.min(95, Math.round(done / 6 * 95)));
+        }
+      } catch (_) {}
+    }
+    ProgressUI.addLog('⏰ 轮询超时，请稍后重试', 'error');
+  },
+
+  /** 获取完整结果并渲染 */
+  async _fetchAndShowResult(screenId) {
+    try {
+      const data = await ApiService.pollResult(screenId);
+      if (data && data.result) {
+        showResultView(data);
+      }
+    } catch (e) {
+      ProgressUI.addLog(`获取结果失败: ${e.message}`, 'error');
+    } finally {
+      ProgressUI.hide();
+    }
+  },
+
+  /** 执行批量筛查（最多5条并行） */
+  async runBatch(urls) {
+    ProgressUI.resetSteps();
+    ProgressUI.show();
+    ProgressUI.setTitle(`批量筛查 · 共 ${urls.length} 人`);
+    ProgressUI.setBatchStats(0, 0, 0);
+    ProgressUI.addLog(`提交 ${urls.length} 条筛查任务 (最大并行 5 条)...`, 'active');
+
+    const MAX_CONCURRENT = 5;
+    let done = 0, failed = 0, running = 0;
+    const results = [];
+
+    // 分批次提交
+    for (let i = 0; i < urls.length; i += MAX_CONCURRENT) {
+      const batch = urls.slice(i, i + MAX_CONCURRENT);
+      running = batch.length;
+      ProgressUI.setBatchStats(done, running, failed);
+
+      const promises = batch.map(async (item) => {
+        if (ProgressUI.cancelled) return null;
+        try {
+          const data = await ScreenController.runSingle(item.url);
+          if (data) {
+            results.push({ url: item.url, ...data });
+            done++;
+          } else {
+            failed++;
+          }
+        } catch (e) {
+          failed++;
+        }
+        running = Math.max(0, running - 1);
+        ProgressUI.setBatchStats(done, running, failed);
+      });
+
+      await Promise.all(promises);
+    }
+
+    ProgressUI.setBatchStats(done, 0, failed);
+    ProgressUI.addLog(`✅ 批量筛查完成 — ${done} 成功, ${failed} 失败`);
+    return results;
+  }
+};
+
+/* =========================================================
+   开始筛查按钮
+   ========================================================= */
+btnStart.addEventListener('click', async () => {
+  const urls = parseUrls();
+  if (urls.length === 0) return;
+
+  btnStart.disabled = true;
+  ProgressUI.resetCancel();
+  const controller = ScreenController;
+
+  try {
+    if (urls.length === 1) {
+      const data = await controller.runSingle(urls[0].url);
+      if (data) {
+        // Step 3+ 将在此处渲染结果
+        console.log('筛查完成', data);
+      }
+    } else {
+      const results = await controller.runBatch(urls);
+      if (results && results.length > 0) {
+        const validResults = results.filter(r => r !== null);
+        if (validResults.length > 0) {
+          renderBatchResults(validResults);
+        }
+      }
+    }
+  } finally {
+    btnStart.disabled = false;
+  }
+});
+
+// 取消按钮
+document.getElementById('btnCancel').addEventListener('click', () => {
+  ProgressUI.cancel();
+  ProgressUI.addLog('正在取消…', 'error');
+  setTimeout(() => {
+    ProgressUI.hide();
+  }, 1000);
+});
+
+/* =========================================================
+   API 健康检查
+   ========================================================= */
+async function checkApiHealth() {
+  const banner = document.getElementById('apiBanner');
+  try {
+    const data = await ApiService.health();
+    const missing = data.missing_config || [];
+    if (missing.length === 0) {
+      banner.className = 'api-banner all-ok';
+      banner.innerHTML = '<span class="dot dot-ok"></span>所有 API 已就绪 · 后端运行正常';
+    } else {
+      banner.className = 'api-banner warning';
+      banner.innerHTML = `<span class="dot dot-warn"></span>部分 API 未配置: ${missing.join(', ')}`;
+    }
+  } catch (e) {
+    banner.className = 'api-banner bad';
+    banner.innerHTML = `<span class="dot dot-bad"></span>无法连接后端服务 · 请确认服务已启动`;
+  }
+}
+checkApiHealth();
+
+/* =========================================================
+   历史记录 (Step 7)
+   ========================================================= */
+
+/** 存储完整的历史数据用于查看详情 */
+let _historyFullData = [];
+
+/** 渲染历史记录列表 */
+function renderHistoryList(items) {
+  const list = document.getElementById('historyList');
+  _historyFullData = items;
+
+  // 统计
+  document.getElementById('histTotal').textContent = items.length;
+  document.getElementById('histApprove').textContent = items.filter(i => i.verdict === 'approve').length;
+  document.getElementById('histReview').textContent = items.filter(i => i.verdict === 'review').length;
+  document.getElementById('histReject').textContent = items.filter(i => i.verdict === 'reject').length;
+
+  if (items.length === 0) {
+    list.innerHTML = `
+      <div class="history-empty">
+        <div class="icon-big">📋</div>
+        <div>暂无历史记录</div>
+        <div class="text-muted text-sm mt-8">完成创作者筛查后，记录将自动保存在这里</div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = items.map((item, idx) => {
+    const score = item.composite_score;
+    const verdict = item.verdict || 'review';
+    const scoreColor = score >= 70 ? 'var(--ok)' : (score >= 50 ? 'var(--warn)' : 'var(--bad)');
+    const creator = item.creator || {};
+    const date = Utils.formatDate(item.created_at);
+    const vetoHint = item.veto_flags && item.veto_flags.length > 0 ? ' ⚠️' : '';
+    return `
+      <div class="history-item" data-idx="${idx}">
+        <div class="h-avatar">🎮</div>
+        <div class="h-info">
+          <div class="h-name">${Utils.escapeHtml(creator.name || '—')}${vetoHint}</div>
+          <div class="h-meta">${Utils.formatPlatform(creator.platform)} · ${Utils.formatNum(creator.subs || 0)} 订阅 · ${date}</div>
+        </div>
+        <div class="h-right">
+          <span class="h-score" style="color:${scoreColor}">${score != null ? score : '—'}</span>
+          <span class="tag ${Utils.verdictCls(verdict)}">${Utils.verdictLabel(verdict)}</span>
+          <div class="h-actions">
+            <button class="btn-icon" onclick="event.stopPropagation(); viewHistoryDetail(${idx})" title="查看详情">📄</button>
+            <button class="btn-icon" onclick="event.stopPropagation(); rerunHistory(${idx})" title="重新筛查">🔄</button>
+            <button class="btn-icon" onclick="event.stopPropagation(); exportHistoryItem(${idx})" title="导出 Excel">📥</button>
+            <button class="btn-icon danger" onclick="event.stopPropagation(); deleteHistory(${idx})" title="删除">🗑️</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // 点击行查看详情
+  list.querySelectorAll('.history-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = parseInt(el.dataset.idx);
+      viewHistoryDetail(idx);
     });
-    tbody.appendChild(tr);
   });
 }
 
-gid('batchExportInline').addEventListener('click',()=>{
-  if(currentBatchId) window.open(`/api/batch/${currentBatchId}/export`,'_blank');
+/** 查看历史详情（从后端获取完整数据） */
+async function viewHistoryDetail(idx) {
+  const item = _historyFullData[idx];
+  if (!item) return;
+
+  try {
+    const data = await ApiService.pollResult(item.id);
+    // 切换到筛查Tab
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab[data-tab="screen"]').classList.add('active');
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('sectionScreen').classList.add('active');
+    ProgressUI.hide();
+    showResultView(data);
+  } catch (e) {
+    showToast('获取历史详情失败: ' + e.message, 'warn', 3000);
+  }
+}
+
+/** 重新筛查 */
+async function rerunHistory(idx) {
+  const item = _historyFullData[idx];
+  if (!item) return;
+  urlInput.value = item.url || '';
+  updateUrlUI();
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.tab[data-tab="screen"]').classList.add('active');
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sectionScreen').classList.add('active');
+  await Utils.sleep(100);
+  if (!btnStart.disabled) btnStart.click();
+}
+
+/** 删除历史 */
+async function deleteHistory(idx) {
+  const item = _historyFullData[idx];
+  if (!item) return;
+  try {
+    await ApiService.deleteScreen(item.id);
+    _historyFullData.splice(idx, 1);
+    renderHistoryList(_historyFullData);
+    showToast('已删除历史记录', 'success', 2000);
+  } catch (e) {
+    showToast('删除失败: ' + e.message, 'warn', 3000);
+  }
+}
+
+/** 从历史记录导出 Excel */
+function exportHistoryItem(idx) {
+  const item = _historyFullData[idx];
+  if (!item || !item.id) { showToast('无效的记录', 'warn'); return; }
+  ApiService.exportSingle(item.id);
+  showToast('正在下载报告…', 'info', 2000);
+}
+
+/** 当前历史页码 */
+let _historyPage = 1;
+let _historyTotal = 0;
+
+/** 从后端加载历史记录 */
+async function loadHistory(page = 1) {
+  const keyword = document.getElementById('historySearch').value.trim();
+  const verdict = document.getElementById('filterVerdict').value;
+
+  try {
+    const params = { page, limit: 20 };
+    if (keyword) params.search = keyword;
+    if (verdict) params.verdict = verdict;
+
+    const data = await ApiService.history(params);
+    _historyTotal = data.total || 0;
+    _historyPage = page;
+
+    // 映射后端数据格式 → 前端渲染格式
+    const items = (data.items || []).map(item => ({
+      id: item.id,
+      composite_score: item.composite_score,
+      verdict: item.verdict,
+      veto_flags: item.veto_flags || [],
+      created_at: item.created_at,
+      completed_at: item.completed_at,
+      url: item.url || '',
+      creator: {
+        name: item.creator_name || item.creator_handle || 'Unknown',
+        handle: item.creator_handle || '',
+        platform: item.platform || '',
+        subs: item.subs || 0,
+        avatar_url: item.avatar_url || '',
+      }
+    }));
+
+    renderHistoryList(items);
+  } catch (e) {
+    showToast('加载历史记录失败: ' + e.message, 'warn', 3000);
+    renderHistoryList([]);
+  }
+}
+
+// 初始化历史记录（切换到该Tab时加载）
+document.getElementById('historySearch').addEventListener('input', () => loadHistory(1));
+document.getElementById('filterVerdict').addEventListener('change', () => loadHistory(1));
+document.getElementById('filterDate').addEventListener('change', () => loadHistory(1));
+document.getElementById('btnRefreshHistory').addEventListener('click', () => loadHistory(1));
+
+/* =========================================================
+   关键词库管理
+   ========================================================= */
+
+/** 关键词数据 */
+const KW_DATA = {
+  political: {
+    label: '🚩 政治敏感',
+    categories: {
+      "geo_sensitive": {
+        label: "地缘政治敏感",
+        description: "涉及领土主权、政治实体承认等红线议题",
+        severity: "critical",
+        keywords: [
+          "taiwan independence", "free taiwan", "stand with taiwan", "taiwan is a country",
+          "taiwan not china", "taiwan nation", "taiwanese sovereignty",
+          "hong kong independence", "free hong kong", "hong kong is not china",
+          "stand with hong kong", "hong kong protest",
+          "tibet independence", "free tibet", "tibet is not china",
+          "tiananmen", "june fourth", "tiananmen square",
+          "xinjiang genocide", "uyghur genocide", "free uyghur",
+          "east turkestan", "xinjiang concentration camp",
+          "south china sea arbitration",
+          "chinazi", "ccp nazi"
+        ]
+      },
+      "anti_china_narrative": {
+        label: "反华叙事",
+        description: "针对中国/中共/中国公司的系统性抹黑话术",
+        severity: "critical",
+        keywords: [
+          "ccp propaganda", "chinese spy", "chinese surveillance",
+          "chinese malware", "chinese hacking", "china threat",
+          "china virus", "wuhan virus", "chinese virus",
+          "made in china spy", "chinese data theft",
+          "china debt trap", "chinese exploitation",
+          "chinese censorship", "great firewall",
+          "chinese bot farm", "chinese disinformation",
+          "ccp control", "communist takeover",
+          "china stealing", "chinese theft"
+        ]
+      },
+      "stigmatization": {
+        label: "污名化标签",
+        description: "针对中国游戏/中国公司的行业污名化表述",
+        severity: "warning",
+        keywords: [
+          "chinese shovelware", "chinese gacha scam",
+          "chinese cash grab", "chinese pay to win",
+          "chinese knockoff", "chinese bootleg", "chinese fake",
+          "chinese spyware game", "chinese malware app",
+          "chinese data miner", "chinese gambling",
+          "chinese loot box", "chinese predator game",
+          "tencent spy", "tencent malware", "tencent data",
+          "chi-com game", "red money game",
+          "chinese whale hunting",
+          "ccp gaming", "communist game"
+        ]
+      },
+      "hate_or_discrimination": {
+        label: "仇恨与歧视",
+        description: "种族歧视、性别歧视、LGBTQ+ 仇恨言论等",
+        severity: "critical",
+        keywords: [
+          "chink", "chinese slurs",
+          "nigger", "faggot", "tranny", "retard",
+          "kill yourself", "go die", "rape",
+          "white supremacy", "nazi", "hitler",
+          "deport them", "go back to china",
+          "anti semitic", "jew",
+          "islamophobic", "muslim terrorist",
+          "transphobic", "homophobic",
+          "misogyny", "women belong",
+          "groomer", "pedophile accusation"
+        ]
+      },
+      "religious_sensitivity": {
+        label: "宗教敏感",
+        description: "宗教迫害叙事、邪教关联、宗教极端主义等",
+        severity: "critical",
+        keywords: [
+          "falun gong", "falun dafa", "法轮功", "法轮大法",
+          "shen yun", "shenyun performing",
+          "eastern lightning", "全能神",
+          "religious persecution china", "china religious crackdown",
+          "christian persecution china", "china church crackdown",
+          "underground church china", "house church china",
+          "three self church", "三自教会",
+          "muslim oppression china", "china mosque demolition",
+          "tibetan buddhist persecution",
+          "religious freedom china", "china religious surveillance",
+          "bible ban china", "cross removal china",
+          "china cult crackdown", "religious extremism",
+          "islamic extremism", "religious radicalization",
+          "china atheist persecution", "china religious control"
+        ]
+      },
+      "war_conflict": {
+        label: "战争与冲突",
+        description: "历史战争叙事、军事威胁言论、战争煽动性话术",
+        severity: "warning",
+        keywords: [
+          "nanjing massacre", "nanking massacre", "南京大屠杀",
+          "sino japanese war", "second sino japanese war",
+          "comfort women", "慰安妇",
+          "china war crime", "china aggression",
+          "china invasion", "china expansionism",
+          "china military threat", "pla threat",
+          "china territorial expansion", "china imperialism",
+          "china colonization", "china neo colonialism",
+          "south china sea militarization", "south china sea conflict",
+          "taiwan strait war", "china invade taiwan",
+          "sino indian border war", "china border aggression",
+          "cold war china", "china new cold war",
+          "china nuclear threat", "china missile threat",
+          "china cyber attack", "china cyber warfare",
+          "china biological weapon", "china lab leak",
+          "chinese army brutality", "pla brutality",
+          "china genocide", "china ethnic cleansing"
+        ]
+      },
+      "gender_issues": {
+        label: "性别议题",
+        description: "性别歧视、厌女文化、游戏行业性别争议等",
+        severity: "warning",
+        keywords: [
+          "china gender discrimination", "china sexism",
+          "china gender gap", "china gender inequality",
+          "chinese women rights", "china women oppression",
+          "china patriarchy", "china toxic masculinity",
+          "china me too", "china metoo movement",
+          "gender pay gap china", "china workplace sexism",
+          "china abortion", "china one child gender",
+          "china female infanticide", "china missing women",
+          "china gender ratio", "china bride trafficking",
+          "women in gaming harassment", "gamer girl harassment",
+          "gaming sexism", "game industry misogyny",
+          "female objectification gaming",
+          "gacha sexualization", "loot box sexualization",
+          "anime sexualization minors",
+          "chinese game sexist", "chinese game objectification",
+          "games industry gender discrimination"
+        ]
+      }
+    }
+  },
+  competitor: {
+    label: '🎮 竞品分析',
+    categories: {
+      "primary_competitors": {
+        label: "主要竞品",
+        description: "核心竞品 IP 及游戏名称",
+        severity: "warning",
+        keywords: [
+          "pokemon", "pokémon", "pocket monster",
+          "palworld", "pocket pair",
+          "temtem", "crema games",
+          "nexomon", "nexomon extinction",
+          "coromon",
+          "monster sanctuary",
+          "dragon quest monster",
+          "siralim",
+          "cassette beasts",
+          "monster crown"
+        ]
+      },
+      "comparison_terms": {
+        label: "对比话术",
+        description: "用于将游戏与竞品进行负面对比的关键词",
+        severity: "warning",
+        keywords: [
+          "pokemon clone", "pokemon copy", "pokemon ripoff",
+          "pokemon knockoff", "pokemon bootleg",
+          "palworld clone", "palworld ripoff",
+          "temtem clone",
+          "chinese pokemon", "china pokemon",
+          "pokemon with guns",
+          "discount pokemon", "wish pokemon",
+          "pokemon wannabe",
+          "off brand pokemon",
+          "fake pokemon", "fake monster taming",
+          "poor man pokemon",
+          "pokemon killer", "pokemon competitor",
+          "not pokemon", "unlicensed pokemon",
+          "pokemon-like", "pokemon inspired",
+          "literally pokemon",
+          "pokemon but", "pokemon rip-off"
+        ]
+      },
+      "nintendo_brand_safety": {
+        label: "任天堂品牌关联",
+        description: "任天堂/TPC 法律风险相关话术",
+        severity: "critical",
+        keywords: [
+          "nintendo lawsuit", "nintendo cease and desist",
+          "nintendo going to sue", "nintendo will sue",
+          "nintendo legal", "nintendo lawyer",
+          "nintendo strike", "nintendo dmca",
+          "pokemon company lawsuit", "pokemon company legal",
+          "game freak lawsuit",
+          "nintendo ninjas",
+          "nintendo copyright",
+          "nintendo patent infringement",
+          "nintendo killing",
+          "nintendo shutting down"
+        ]
+      },
+      "tencent_stigma": {
+        label: "腾讯负面标签",
+        description: "针对腾讯作为发行商的负面话术",
+        severity: "warning",
+        keywords: [
+          "tencent game", "tencent cash grab",
+          "tencent pay to win", "tencent p2w",
+          "tencent gacha", "tencent loot box",
+          "tencent spyware", "tencent malware",
+          "tencent data mining",
+          "tencent monopoly", "tencent evil",
+          "tencent trash", "tencent garbage",
+          "tencent ruining", "tencent destroy",
+          "tencent money grab",
+          "tencent china spy",
+          "tencent cc", "tencent chinese communist",
+          "tencent censorship",
+          "tencent banned", "tencent region lock"
+        ]
+      },
+      "neutral_genre_terms": {
+        label: "中立品类词",
+        description: "品类相关中性词，用于内容分类（不标记为风险）",
+        severity: "info",
+        keywords: [
+          "monster taming", "creature collection",
+          "open world", "open-world",
+          "rpg", "role playing",
+          "mmo", "mmorpg",
+          "adventure game",
+          "pet battle", "pet collecting",
+          "creature capturing",
+          "beast collecting",
+          "action rpg"
+        ]
+      }
+    }
+  }
+};
+
+/** 当前关键词Tab */
+let _kwActiveTab = 'political';
+/** 输入框显隐 */
+let _kwaddingTo = null;
+/** 可变关键词数据（可从后端加载，回退到 KW_DATA） */
+let _kwData = JSON.parse(JSON.stringify(KW_DATA));
+
+/** 从后端加载关键词数据 */
+async function loadKeywordsFromBackend() {
+  try {
+    const [polRes, comRes] = await Promise.allSettled([
+      fetch(`${API_BASE}/keywords/political`),
+      fetch(`${API_BASE}/keywords/competitor`),
+    ]);
+    if (polRes.status === 'fulfilled' && polRes.value.ok) {
+      const polData = await polRes.value.json();
+      if (polData && Object.keys(polData).length) {
+        _kwData.political.categories = polData;
+      }
+    }
+    if (comRes.status === 'fulfilled' && comRes.value.ok) {
+      const comData = await comRes.value.json();
+      if (comData && Object.keys(comData).length) {
+        _kwData.competitor.categories = comData;
+      }
+    }
+  } catch {
+    // 后端不可用时静默回退到本地数据
+  }
+}
+
+/** 保存当前关键词到后端 */
+async function saveKeywordsToBackend() {
+  const tabKey = _kwActiveTab;
+  const categories = _kwData[tabKey].categories;
+  // 构建纯净 JSON（不含 tab wrapper）
+  const plain = {};
+  for (const [key, cat] of Object.entries(categories)) {
+    plain[key] = {
+      label: cat.label,
+      description: cat.description,
+      severity: cat.severity,
+      keywords: [...cat.keywords],
+    };
+  }
+  const res = await fetch(`${API_BASE}/keywords/${tabKey === 'political' ? 'political' : 'competitor'}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(plain),
+  });
+  if (!res.ok) throw new Error(`保存失败: HTTP ${res.status}`);
+}
+
+function renderKeywords() {
+  const tab = _kwData[_kwActiveTab];
+  if (!tab) return;
+  const search = document.getElementById('kwSearch').value.toLowerCase();
+  const container = document.getElementById('kwContent');
+
+  const cats = tab.categories;
+  const catKeys = Object.keys(cats);
+  let totalKws = 0;
+
+  container.innerHTML = catKeys.map(key => {
+    const cat = cats[key];
+    const sev = cat.severity || 'warning';
+    const filtered = search
+      ? cat.keywords.filter(k => k.toLowerCase().includes(search))
+      : cat.keywords;
+    totalKws += cat.keywords.length;
+
+    if (search && filtered.length === 0) return '';
+
+    const tagsHtml = filtered.map(kw => `
+      <span class="kw-tag-item ${sev}" data-cat="${key}" data-kw="${Utils.escapeHtml(kw)}">
+        ${Utils.escapeHtml(kw)}
+        <span class="remove-kw" onclick="removeKeyword('${key}','${Utils.escapeHtml(kw).replace(/'/g, "\\'")}')">✕</span>
+      </span>
+    `).join('');
+
+    const addInputId = `kw-add-${key}`;
+
+    return `
+      <div class="kw-category expanded" data-cat="${key}">
+        <div class="kw-category-header" onclick="toggleKwCategory(this)">
+          <div class="cat-sev ${sev}"></div>
+          <span class="cat-name">${cat.label}</span>
+          <span class="cat-desc">${cat.description}</span>
+          <span class="cat-count">${cat.keywords.length} 条</span>
+          <span class="cat-arrow">▼</span>
+        </div>
+        <div class="kw-category-body">
+          <div class="kw-tags-wrap">
+            ${tagsHtml}
+            <span class="kw-add-btn" onclick="showKwAddInput('${key}')" id="kw-add-btn-${key}">+ 添加</span>
+            <span class="kw-add-input" id="${addInputId}" style="display:none;">
+              <input type="text" placeholder="输入关键词..." onkeydown="if(event.key==='Enter')addKeyword('${key}')">
+              <button class="btn-sm" onclick="addKeyword('${key}')">确定</button>
+              <button class="btn-sm" onclick="hideKwAddInput('${key}')">取消</button>
+            </span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // 更新总数
+  document.getElementById('kwTotalInfo').textContent = `${tab.label} · 共 ${totalKws} 个关键词 · ${catKeys.length} 个分类`;
+}
+
+function toggleKwCategory(header) {
+  const card = header.closest('.kw-category');
+  card.classList.toggle('expanded');
+}
+
+function showKwAddInput(catKey) {
+  document.getElementById(`kw-add-btn-${catKey}`).style.display = 'none';
+  document.getElementById(`kw-add-${catKey}`).style.display = 'inline-flex';
+  document.querySelector(`#kw-add-${catKey} input`).focus();
+}
+
+function hideKwAddInput(catKey) {
+  document.getElementById(`kw-add-btn-${catKey}`).style.display = '';
+  document.getElementById(`kw-add-${catKey}`).style.display = 'none';
+}
+
+function addKeyword(catKey) {
+  const input = document.querySelector(`#kw-add-${catKey} input`);
+  const val = input.value.trim();
+  if (!val) return;
+  const cat = _kwData[_kwActiveTab].categories[catKey];
+  if (!cat) return;
+  if (cat.keywords.includes(val)) {
+    showToast('该关键词已存在', 'warn', 2000);
+    return;
+  }
+  cat.keywords.push(val);
+  input.value = '';
+  hideKwAddInput(catKey);
+  renderKeywords();
+  saveKeywordsToBackend().catch(() => {});
+  showToast(`已添加: "${val}"`, 'success', 1500);
+}
+
+function removeKeyword(catKey, kw) {
+  const cat = _kwData[_kwActiveTab].categories[catKey];
+  if (!cat) return;
+  const idx = cat.keywords.indexOf(kw);
+  if (idx > -1) cat.keywords.splice(idx, 1);
+  renderKeywords();
+  saveKeywordsToBackend().catch(() => {});
+  showToast(`已删除: "${kw}"`, 'info', 1500);
+}
+
+// Sub-tab switching
+document.querySelectorAll('.kw-subtab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.kw-subtab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _kwActiveTab = btn.dataset.kwtab;
+    renderKeywords();
+  });
+});
+document.getElementById('kwSearch').addEventListener('input', renderKeywords);
+
+// Expand/collapse all
+document.getElementById('kwExpandAll').addEventListener('click', () => {
+  document.querySelectorAll('.kw-category').forEach(c => c.classList.add('expanded'));
+});
+document.getElementById('kwCollapseAll').addEventListener('click', () => {
+  document.querySelectorAll('.kw-category').forEach(c => c.classList.remove('expanded'));
 });
 
-gid('startBtn').addEventListener('click',async()=>{
-  const urls=getUrlLines();
-  if(!urls.length){alert('请输入至少一个 YouTube 创作者链接。');return;}
-  if(urls.length===1){
-    const res=await fetch('/api/screen',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:urls[0]})});
-    const data=await res.json();
-    if(!res.ok||!data.screen_id){alert('提交失败：'+(data.detail||data.error||'未知错误'));return;}
-    gid('searchView').classList.add('hidden');
-    gid('resultView').classList.add('hidden');
-    gid('batchResultPanel').classList.add('hidden');
-    await pollResult(data.screen_id);
-  }else{
-    await runBatch(urls);
+// Export JSON
+document.getElementById('kwExport').addEventListener('click', () => {
+  const data = _kwData[_kwActiveTab];
+  const blob = new Blob([JSON.stringify(data.categories, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `keywords_${_kwActiveTab}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`已导出 keywords_${_kwActiveTab}.json`, 'success', 2000);
+});
+
+
+/* =========================================================
+   按钮事件绑定
+   ========================================================= */
+
+// 批量视图: 返回搜索
+document.getElementById('btnBatchBack').addEventListener('click', () => {
+  document.getElementById('batchView').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'block';
+});
+
+// 批量视图: 导出汇总
+document.getElementById('btnBatchExport').addEventListener('click', async () => {
+  const ids = _batchExportIds || [];
+  if (ids.length === 0) { showToast('没有可导出的结果', 'warn'); return; }
+  try {
+    showToast('正在生成批量报告…', 'info', 5000);
+    await ApiService.exportBatch(ids);
+    showToast(`已导出 ${ids.length} 条筛查结果`, 'success');
+  } catch (e) {
+    showToast(`导出失败: ${e.message}`, 'error');
   }
 });
 
-gid('singleExportBtn').addEventListener('click',()=>{
-  if(!currentScreenId)return;
-  window.open(`/api/screen/${currentScreenId}/export`,'_blank');
+// 单条视图: 重新筛查
+document.getElementById('btnRerun').addEventListener('click', () => {
+  document.getElementById('resultView').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'block';
 });
 
-// ==================== 历史记录 ====================
-async function loadHistory(){
-  const q=gid('searchInput').value.trim();const v=gid('verdictFilter').value;
-  const params=new URLSearchParams({page:'1',limit:'20'});
-  if(q)params.set('search',q);if(v)params.set('verdict',v);
-  const data=await fetch(`/api/history?${params}`).then(r=>r.json());
-  const tbody=gid('historyTbody');tbody.innerHTML='';
-  (data.items||[]).forEach(item=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${esc(item.created_at||'')}</td><td>${esc(item.creator_name||'')}</td><td>${esc(item.platform||'')}</td><td>${fmtScore(item.composite_score)}</td><td>${esc(verdictText(item.verdict))}</td><td><button class="secondary" data-id="${esc(item.id)}">查看</button></td>`;
-    tr.querySelector('button').addEventListener('click',async(e)=>{
-      const detail=await fetch(`/api/screen/${e.target.dataset.id}`).then(r=>r.json());
-      tabs[0].click();
-      renderResult(detail);
-    });
-    tbody.appendChild(tr);
-  });
-}
-
-gid('historyBtn').addEventListener('click',loadHistory);
-
-// ==================== 初始化 ====================
-loadHistory().catch(()=>{});
-loadConfig().catch(()=>{});
-console.log('=== NRC Screening v3.2 - JS ready ===');
-}catch(e){
-  console.error('JS ERROR:', e.message);
-  document.body.innerHTML+='<div style=\"position:fixed;top:0;left:0;right:0;background:red;color:#fff;padding:12px;z-index:9999;text-align:center;\">JS错误: '+e.message+'</div>';
-}
+// 单条视图: 导出报告
+document.getElementById('btnExport').addEventListener('click', () => {
+  const screenId = _currentScreenId;
+  if (!screenId) { showToast('没有可导出的结果', 'warn'); return; }
+  ApiService.exportSingle(screenId);
+  showToast('正在下载报告…', 'info', 2000);
+});
 </script>
 </body>
 </html>
